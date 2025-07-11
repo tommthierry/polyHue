@@ -1,0 +1,43 @@
+###############################################################################
+# PolyHue — Cursor ignore (last updated 2025-07-11)                           #
+# Anything listed here is **invisible** to the AI *and* omitted from the index#
+# You still need .gitignore for Git-specific hygiene.                         #
+###############################################################################
+
+# ── build artefacts / caches (dup of Cursor defaults, kept for clarity) ─────
+dist/
+build/
+out/
+.cache/
+.next/
+.parcel-cache/
+coverage/
+*.log
+
+# ── dependencies (again duplicated intentionally for belt-and-braces) ───────
+node_modules/
+.pnpm/
+.yarn/
+
+# ── large binary assets you never want sent to the model --------------------
+public/assets/raw/**
+*.psd
+*.ai
+*.mp4
+*.mov
+*.zip
+
+# ── scratch & throw-away work ----------------------------------------------
+sandbox/**
+tmp/**
+
+# ── secrets — belt-and-suspenders even though Cursor default blocks *.env* ---
+**/.env*
+**/credentials.json
+**/secrets.json
+*.pem
+*.key
+id_rsa*
+
+# ── exceptions: keep these *in* context for UI docs & screenshots ------------
+!docs/assets/sample-*.png

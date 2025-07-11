@@ -1,0 +1,13 @@
+---
+description: UI/UX rules for PolyHue components
+globs:
+  - "src/components/**"
+alwaysApply: false
+---
+
+* Use **Tailwind** exclusively for styling; never inline `style={{…}}`.
+* Animate with **Framer Motion**; default spring `{duration:0.3}`.
+* Every interactive element gets `aria-label`.
+* Maintain colour contrast ≥ AA.  
+  * Light mode primary = `#0ea5e9`; Dark mode primary = `#38bdf8`. 
+* Mobile first: components must work at `360 px` before desktop breakpoints.

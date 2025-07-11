@@ -1,0 +1,22 @@
+---
+description: Source-tree layout & naming conventions
+globs:
+  - "src/**"
+alwaysApply: false
+---
+
+# Folder layout
+
+| Path              | Responsibility                               |
+|-------------------|----------------------------------------------|
+| `src/entry/`      | Mounts UI, initialises pinia/zustand store   |
+| `src/components/` | Pure presentational React/TSX components     |
+| `src/modules/`    | Feature slices (image, quantizer, export …)  |
+| `src/workers/`    | Real Web-Worker entrypoints (no DOM access)  |
+| `src/utils/`      | Re-usable helpers (colour, geometry, UUID)   |
+
+**Guidelines**
+
+* Each `module` owns its own state slice + services.
+* Web-Worker code must live in `workers/` and postMessage JSON-serialisable data only.
+* No default exports except React components. Use *named* exports elsewhere.

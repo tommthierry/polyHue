@@ -1,0 +1,15 @@
+---
+description: Filament JSON schema & colour-matching algorithm
+alwaysApply: false
+---
+
+When asked “How do we store filaments?” or “How to find the nearest filament?” include:
+
+```ts
+export interface Filament {
+  id: string;
+  vendor: string;
+  name: string;
+  hex: `#${string}`;
+  td: number;          // transmission distance in mm
+}

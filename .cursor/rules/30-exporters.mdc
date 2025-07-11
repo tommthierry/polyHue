@@ -1,0 +1,13 @@
+---
+description: Constraints for 3-D file exporters
+globs:
+  - "src/modules/export/**"
+alwaysApply: false
+---
+
+* **GLB** via `THREE.GLTFExporter`; embed vertex colours (no textures).
+* **OBJ/MTL** one material per colour **region**.
+* **STL** geometry only; unit must stay in millimetres.
+* **3MF** flagged `beta`; behind `is3mfEnabled` feature toggle.
+* Never block UI for > 10 s — long tasks must run in a worker and stream
+  progress via `postMessage({type:'progress', value: nn})`.
