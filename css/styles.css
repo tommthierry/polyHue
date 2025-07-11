@@ -1,0 +1,272 @@
+/* CSS Variables for consistent theming */
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --success-color: #10b981;
+    --background-dark: #1a1a1a;
+    --text-gray-light: #f3f4f6;
+    --text-gray-medium: #9ca3af;
+    --text-gray-dark: #374151;
+    --border-gray: #e5e7eb;
+    --white-alpha-10: rgba(255, 255, 255, 0.1);
+    --white-alpha-20: rgba(255, 255, 255, 0.2);
+    --primary-alpha-10: rgba(102, 126, 234, 0.1);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --transition-base: all 0.3s ease;
+    --transition-fast: all 0.2s ease;
+    --border-radius-base: 0.5rem;
+    --border-radius-lg: 0.75rem;
+    --border-radius-full: 9999px;
+}
+
+/* Gradient backgrounds */
+.gradient-bg {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+/* Glass effect for modern UI */
+.glass-effect {
+    backdrop-filter: blur(10px);
+    background: var(--white-alpha-10);
+    border: 1px solid var(--white-alpha-20);
+}
+
+/* Preview container */
+.preview-container {
+    min-height: 400px;
+    background: var(--background-dark);
+}
+
+/* Region overlay styles */
+.region-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.region-overlay.interactive {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Interactive elements with hover effects */
+.filament-chip,
+.upload-area {
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+.filament-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.upload-area:hover {
+    border-color: var(--text-gray-medium);
+    background-color: rgba(249, 250, 251, 0.8);
+}
+
+/* Step indicators with modern styling */
+.step-indicator {
+    position: relative;
+    transition: var(--transition-fast);
+}
+
+.step-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -50px;
+    width: 40px;
+    height: 2px;
+    background: var(--border-gray);
+    transform: translateY(-50%);
+}
+
+.step-indicator.active {
+    color: var(--primary-color);
+}
+
+.step-indicator.completed {
+    color: var(--success-color);
+}
+
+.step-indicator.completed::after {
+    background: var(--success-color);
+}
+
+/* Loading spinner with CSS animation */
+.loading-spinner {
+    border: 2px solid var(--text-gray-light);
+    border-top: 2px solid var(--primary-color);
+    border-radius: var(--border-radius-full);
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Drag and drop states */
+.drag-over {
+    border-color: var(--primary-color) !important;
+    background-color: var(--primary-alpha-10) !important;
+    transform: scale(1.02);
+}
+
+.processing {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+    .step-indicator::after {
+        display: none;
+    }
+    
+    .step-indicator {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Focus states for accessibility */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Enhanced form controls */
+input[type="range"] {
+    appearance: none;
+    height: 6px;
+    background: var(--border-gray);
+    border-radius: var(--border-radius-base);
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary-color);
+    border-radius: var(--border-radius-full);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary-color);
+    border-radius: var(--border-radius-full);
+    cursor: pointer;
+    border: none;
+    transition: var(--transition-fast);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+/* Enhanced checkbox styling */
+input[type="checkbox"] + div {
+    transition: var(--transition-fast);
+}
+
+input[type="checkbox"]:checked + div {
+    background: var(--primary-color);
+}
+
+input[type="checkbox"]:checked + div > div {
+    transform: translateX(100%);
+}
+
+/* Button enhancements */
+button {
+    transition: var(--transition-fast);
+    border-radius: var(--border-radius-base);
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Card styling consistency */
+.card {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    transition: var(--transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Utility classes */
+.text-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+}
+
+.shadow-glow {
+    box-shadow: 0 0 20px var(--primary-alpha-10);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-dark: #0f0f0f;
+        --text-gray-light: #1f2937;
+        --border-gray: #374151;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+} 

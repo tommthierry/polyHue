@@ -68,46 +68,61 @@ PolyHue is 100% front-end (HTML5/CSS3/JS ES Modules, Three.js) and outputs STL f
 * Filament/color library includes brand, hex, Transmission Distance (TD), editable/custom.
 * 3D output: STL (geometry), GLB/OBJ/MTL/3MF (geometry + color, per-region or per-vertex).
 
+### Implementation Architecture (HTML-First)
+
+* **Single HTML file** with embedded CSS/JS or linked resources
+* **Third-party libraries** loaded via CDN or local files:
+  - Three.js (3D rendering, exporters)
+  - jQuery (DOM manipulation, optional)
+  - Additional utilities as needed
+* **No build process** required - runs directly in browser
+* **Modular ES6** code structure within script tags or separate JS files
+* **Web Workers** for heavy computations (color quantization, mesh generation)
+
 ---
 
 ## 6. User Workflow
 
 1. **Import Image:** User uploads PNG/JPEG (SVG converted), sets cropping, rotation, brightness, contrast, background removal as needed.
-2. **Choose Print Mode:**
 
-   * **Lithophane/Blended:** Classic filament painting (translucent stack, swap-by-layer).
-   * **Multi-Color/AMS:** “Max colors” mode; flattens image to ≤N colors/regions, merges similar shades (e.g. orange and red), preview final result.
-3. **Set Max Colors:**
+2. **Start Processing:** User clicks "Start" button to begin color quantization process.
+   - Image is automatically processed to default 8 colors (user can adjust from 2-12 colors)
+   - Algorithm creates distinct color regions using K-means or Median Cut clustering
+   - User can see immediate preview of quantized color regions
 
-   * In “multi-color” mode, user sets the max number of colors (1–8 typical; hard cap at 12 for UX).
-   * Algorithm clusters/merges image colors to produce N regions, each region mapped to nearest filament or manual selection.
-   * Visual region map shown in preview; user can refine/override assignments if needed.
-4. **Filament Palette:**
+3. **Color Organization & Configuration:**
+   - **Drag & Drop Height Order:** User can drag and drop colors to organize them in the order of height for the 3D render (lowest to highest)
+   - **Add Colors:** User can add additional colors to the palette (up to 12 total)
+   - **Delete Colors:** User can remove colors from the palette
+   - **Color Replacement:** User can click on any color to open color picker and replace it with a different color
+   - **Auto-Edit Render:** Any changes to colors or height order automatically updates the 3D render in real-time
 
-   * Select filaments from library or add custom.
-   * In multi-color mode, assign a filament to each color region. In lithophane mode, assign filaments to stack order (bottom→top).
-5. **Layer/Print Settings:**
+4. **Filament Assignment (Optional):**
+   - User can assign specific filament types to each color for material reference
+   - Filament database provides realistic color matching and printing properties
 
-   * Layer height, min/max thickness (for lithophane). For color print, model is uniform thickness or lithophane-style as user chooses.
-6. **Preview:**
+5. **3D Model Generation:**
+   - Each color becomes a height layer in the 3D model
+   - Height is determined by the order specified by the user (drag & drop sequence)
+   - Model generates automatically as user makes changes
 
-   * Live simulation:
+6. **WebGL 3D Preview:**
+   - Interactive 3D view showing the final model with accurate colors and heights
+   - Users can rotate, zoom, and inspect the model before export
+   - Real-time updates as user modifies colors or height order
 
-     * For lithophane, full blended preview (backlit simulation, color accuracy).
-     * For color mode, displays region map and color assignments, with real filament color swatches and merged regions.
-   * 3D geometry preview for both modes.
-7. **Export:**
+7. **Export Options:**
+   - Multiple format support as listed in documentation
+   - **Multi-Color Formats:** GLB (.glb), OBJ+MTL, 3MF (.3mf) with per-region colors
+   - **Single-Color Formats:** STL with height mapping
+   - **Documentation:** Layer height instructions, color swap tables
+   - **Project Files:** JSON project file for later editing
 
-   * **Lithophane:** STL model (geometry), swap table (TXT), preview image (PNG), project file (JSON).
-   * **Multi-color/AMS:**
-
-     * GLB (.glb): Per-vertex or per-region color.
-     * OBJ+MTL: For legacy slicers (one color per region/material).
-     * 3MF (.3mf): (beta/flagged) Full color and region mapping, for AMS/MMU.
-     * All files contain explicit color information as assigned.
-8. **Printing Guidance:**
-
-   * Instructions for slicing, layer height, color swap, and AMS/MMU import.
+### Key Features:
+- **Real-time Processing:** All changes reflect immediately in the 3D preview
+- **Intuitive Interface:** Drag & drop color organization, visual height mapping
+- **Flexible Configuration:** Add/remove colors, change color values, adjust height order
+- **Professional Export:** Multiple industry-standard formats for various 3D printing workflows
 
 ---
 
