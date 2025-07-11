@@ -110,7 +110,7 @@ const projectStore = new StateStore({
     },
     
     // Color quantization
-    maxColors: 4,
+    maxColors: 8,
     quantizationAlgorithm: 'kmeans', // 'kmeans' | 'median-cut'
     
     // Print settings

@@ -545,6 +545,15 @@ class ColorQuantizationManager {
 window.PolyHue = window.PolyHue || {};
 window.PolyHue.ColorQuantization = ColorQuantizationManager;
 
+// Auto-initialize if DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.PolyHue.ColorQuantization = ColorQuantizationManager;
+    });
+} else {
+    window.PolyHue.ColorQuantization = ColorQuantizationManager;
+}
+
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ColorQuantizationManager;

@@ -62,34 +62,60 @@ class PolyHueApp {
      * Initialize state stores with event listeners
      */
     initializeStores() {
-        const { project, regions, filaments } = window.PolyHue.stores;
-        
-        // Subscribe to project changes
-        project.subscribe('mode', (mode) => {
-            this.onModeChange(mode);
-        });
-        
-        project.subscribe('originalImage', (image) => {
-            this.onImageChange(image);
-        });
-        
-        project.subscribe('isProcessing', (isProcessing) => {
-            this.onProcessingChange(isProcessing);
-        });
-        
-        project.subscribe('error', (error) => {
-            if (error) this.handleError('Project Error', error);
-        });
-        
-        // Subscribe to region changes
-        regions.subscribe('regions', (regions) => {
-            this.onRegionsChange(regions);
-        });
-        
-        // Subscribe to filament changes
-        filaments.subscribe('selectedFilaments', (filaments) => {
-            this.onFilamentsChange(filaments);
-        });
+        try {
+            // Ensure stores are available
+            if (!window.PolyHue || !window.PolyHue.stores) {
+                throw new Error('PolyHue stores not initialized');
+            }
+            
+            const { project, regions, filaments } = window.PolyHue.stores;
+            
+            // Subscribe to project changes
+            project.subscribe('mode', (mode) => {
+                try {
+                    this.onModeChange(mode);
+                } catch (error) {
+                    console.error('Error in mode change handler:', error);
+                }
+            });
+            
+            project.subscribe('originalImage', (image) => {
+                try {
+                    this.onImageChange(image);
+                } catch (error) {
+                    console.error('Error in image change handler:', error);
+                }
+            });
+            
+            project.subscribe('isProcessing', (isProcessing) => {
+                try {
+                    this.onProcessingChange(isProcessing);
+                } catch (error) {
+                    console.error('Error in processing change handler:', error);
+                }
+            });
+            
+            // Subscribe to region changes
+            regions.subscribe('regions', (regions) => {
+                try {
+                    this.onRegionsChange(regions);
+                } catch (error) {
+                    console.error('Error in regions change handler:', error);
+                }
+            });
+            
+            // Subscribe to filament changes
+            filaments.subscribe('selectedFilaments', (filaments) => {
+                try {
+                    this.onFilamentsChange(filaments);
+                } catch (error) {
+                    console.error('Error in filaments change handler:', error);
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing stores:', error);
+            throw error;
+        }
     }
 
     /**
@@ -197,6 +223,9 @@ class PolyHueApp {
         // Processing controls
         this.setupProcessingControls();
         
+        // Color organization controls
+        this.setupColorOrganization();
+        
         // Export controls
         this.setupExportControls();
     }
@@ -246,8 +275,18 @@ class PolyHueApp {
      * Set up color settings
      */
     setupColorSettings() {
-        const maxColorsSlider = document.getElementById('max-colors-slider');
-        const maxColorsValue = document.getElementById('max-colors-value');
+        const colorsSlider = document.getElementById('colors-slider');
+        const colorsCount = document.getElementById('colors-count');
+        
+        if (colorsSlider) {
+            colorsSlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                if (colorsCount) {
+                    colorsCount.textContent = value;
+                }
+                this.updateMaxColors(value);
+            });
+        }
         
         if (maxColorsSlider) {
             maxColorsSlider.addEventListener('input', (e) => {
@@ -287,6 +326,33 @@ class PolyHueApp {
                 const value = e.target.value;
                 colorsCount.textContent = value;
                 this.updateMaxColors(parseInt(value));
+            });
+        }
+    }
+
+    /**
+     * Set up color organization controls
+     */
+    setupColorOrganization() {
+        const addColorBtn = document.getElementById('add-color-btn');
+        const resetColorsBtn = document.getElementById('reset-colors-btn');
+        const autoAssignBtn = document.getElementById('auto-assign-filaments');
+        
+        if (addColorBtn) {
+            addColorBtn.addEventListener('click', () => {
+                this.addColor();
+            });
+        }
+        
+        if (resetColorsBtn) {
+            resetColorsBtn.addEventListener('click', () => {
+                this.resetColors();
+            });
+        }
+        
+        if (autoAssignBtn) {
+            autoAssignBtn.addEventListener('click', () => {
+                this.autoAssignFilaments();
             });
         }
     }
@@ -681,6 +747,11 @@ class PolyHueApp {
             // Dispatch processing completed event
             this.dispatchEvent('processing:completed', { result });
             
+            // Automatically move to next step after processing
+            setTimeout(() => {
+                this.nextStep();
+            }, 1500);
+            
         } catch (error) {
             this.handleError('Processing failed', error);
             
@@ -715,10 +786,473 @@ class PolyHueApp {
         
         project.set('colorOrder', colorOrder);
         
+        // Update the color organization UI
+        this.updateColorOrganizationUI(result.palette);
+        
         // Update preview
         this.updatePreview();
         
         console.log('Processing completed with', result.regions.length, 'regions');
+    }
+
+    /**
+     * Update color organization UI with quantized colors
+     * @param {Array} palette - Color palette from quantization
+     */
+    updateColorOrganizationUI(palette) {
+        const colorHeightOrder = document.getElementById('color-height-order');
+        if (!colorHeightOrder) return;
+        
+        // Clear existing content
+        colorHeightOrder.innerHTML = '';
+        
+        // Create color items
+        palette.forEach((color, index) => {
+            const colorItem = document.createElement('div');
+            colorItem.className = 'color-item flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border cursor-move';
+            colorItem.setAttribute('data-color-id', `color-${index}`);
+            colorItem.draggable = true;
+            
+            const colorSwatch = document.createElement('div');
+            colorSwatch.className = 'w-8 h-8 rounded border-2 border-gray-300 flex-shrink-0';
+            colorSwatch.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+            
+            const colorInfo = document.createElement('div');
+            colorInfo.className = 'flex-1';
+            colorInfo.innerHTML = `
+                <div class="font-medium">Color ${index + 1}</div>
+                <div class="text-sm text-gray-500">Height: ${index + 1}</div>
+            `;
+            
+            const colorPicker = document.createElement('button');
+            colorPicker.className = 'text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600';
+            colorPicker.textContent = 'Edit';
+            colorPicker.addEventListener('click', () => {
+                this.showColorPickerDialog(index, color);
+            });
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'text-sm bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => {
+                this.deleteColor(index);
+            });
+            
+            colorItem.appendChild(colorSwatch);
+            colorItem.appendChild(colorInfo);
+            colorItem.appendChild(colorPicker);
+            colorItem.appendChild(deleteButton);
+            
+            colorHeightOrder.appendChild(colorItem);
+        });
+        
+        // Add drag and drop functionality
+        this.setupDragAndDrop();
+    }
+
+    /**
+     * Set up drag and drop for color reordering
+     */
+    setupDragAndDrop() {
+        const colorItems = document.querySelectorAll('.color-item');
+        
+        colorItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.colorId);
+                item.classList.add('opacity-50');
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('opacity-50');
+            });
+            
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const draggedElement = document.querySelector(`[data-color-id="${draggedId}"]`);
+                
+                if (draggedElement && draggedElement !== item) {
+                    const container = item.parentNode;
+                    const afterElement = this.getDragAfterElement(container, e.clientY);
+                    
+                    if (afterElement == null) {
+                        container.appendChild(draggedElement);
+                    } else {
+                        container.insertBefore(draggedElement, afterElement);
+                    }
+                    
+                    this.updateColorOrder();
+                }
+            });
+        });
+    }
+
+    /**
+     * Get the element after which to insert the dragged element
+     * @param {HTMLElement} container - Container element
+     * @param {number} y - Y coordinate
+     * @returns {HTMLElement|null} Element after which to insert
+     */
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.color-item:not(.opacity-50)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    /**
+     * Update color order based on current DOM order
+     */
+    updateColorOrder() {
+        const colorItems = document.querySelectorAll('.color-item');
+        const project = window.PolyHue.stores.project;
+        const currentOrder = project.get('colorOrder') || [];
+        
+        const newOrder = Array.from(colorItems).map((item, index) => {
+            const colorId = item.dataset.colorId;
+            const originalItem = currentOrder.find(c => c.id === colorId);
+            
+            if (originalItem) {
+                return {
+                    ...originalItem,
+                    height: index + 1
+                };
+            }
+            
+            return null;
+        }).filter(item => item !== null);
+        
+        project.set('colorOrder', newOrder);
+        
+        // Update height display
+        colorItems.forEach((item, index) => {
+            const heightDisplay = item.querySelector('.text-sm.text-gray-500');
+            if (heightDisplay) {
+                heightDisplay.textContent = `Height: ${index + 1}`;
+            }
+        });
+        
+        // Update preview
+        this.updatePreview();
+    }
+
+    /**
+     * Show color picker dialog
+     * @param {number} index - Color index
+     * @param {Object} color - Current color
+     */
+    showColorPickerDialog(index, color) {
+        // Create a simple color picker (can be enhanced with a better UI)
+        const newColor = prompt(`Enter new color for Color ${index + 1} (format: r,g,b):`, `${color.r},${color.g},${color.b}`);
+        
+        if (newColor) {
+            const [r, g, b] = newColor.split(',').map(n => parseInt(n.trim()));
+            
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                this.updateColorValue(index, { r, g, b });
+            }
+        }
+    }
+
+    /**
+     * Update color value
+     * @param {number} index - Color index
+     * @param {Object} color - New color
+     */
+    updateColorValue(index, color) {
+        const project = window.PolyHue.stores.project;
+        const colorOrder = project.get('colorOrder') || [];
+        
+        if (colorOrder[index]) {
+            colorOrder[index].color = color;
+            project.set('colorOrder', colorOrder);
+            
+            // Update UI
+            this.updateColorOrganizationUI(colorOrder.map(c => c.color));
+            
+            // Update preview
+            this.updatePreview();
+        }
+    }
+
+    /**
+     * Delete color
+     * @param {number} index - Color index
+     */
+    deleteColor(index) {
+        const project = window.PolyHue.stores.project;
+        const colorOrder = project.get('colorOrder') || [];
+        
+        if (colorOrder.length > 2) { // Keep at least 2 colors
+            colorOrder.splice(index, 1);
+            
+            // Update heights
+            colorOrder.forEach((item, i) => {
+                item.height = i + 1;
+            });
+            
+            project.set('colorOrder', colorOrder);
+            
+            // Update UI
+            this.updateColorOrganizationUI(colorOrder.map(c => c.color));
+            
+            // Update preview
+            this.updatePreview();
+        } else {
+            this.showError('You must have at least 2 colors');
+        }
+    }
+
+    /**
+     * Add a new color to the palette
+     */
+    addColor() {
+        const project = window.PolyHue.stores.project;
+        const colorOrder = project.get('colorOrder') || [];
+        
+        if (colorOrder.length >= 12) {
+            this.showError('Maximum 12 colors allowed');
+            return;
+        }
+        
+        // Create a new color (default to white)
+        const newColor = {
+            id: `color-${colorOrder.length}`,
+            color: { r: 255, g: 255, b: 255 },
+            height: colorOrder.length + 1,
+            index: colorOrder.length
+        };
+        
+        colorOrder.push(newColor);
+        project.set('colorOrder', colorOrder);
+        
+        // Update UI
+        this.updateColorOrganizationUI(colorOrder.map(c => c.color));
+        
+        // Update preview
+        this.updatePreview();
+    }
+
+    /**
+     * Reset colors to original quantized palette
+     */
+    resetColors() {
+        const regions = window.PolyHue.stores.regions;
+        const project = window.PolyHue.stores.project;
+        const originalPalette = regions.get('palette');
+        
+        if (originalPalette && originalPalette.length > 0) {
+            // Recreate original color order
+            const colorOrder = originalPalette.map((color, index) => ({
+                id: `color-${index}`,
+                color: color,
+                height: index + 1,
+                index: index
+            }));
+            
+            project.set('colorOrder', colorOrder);
+            
+            // Update UI
+            this.updateColorOrganizationUI(originalPalette);
+            
+            // Update preview
+            this.updatePreview();
+        } else {
+            this.showError('No original palette found. Please process an image first.');
+        }
+    }
+
+    /**
+     * Auto-assign filaments to colors based on best color match
+     */
+    autoAssignFilaments() {
+        const project = window.PolyHue.stores.project;
+        const filaments = window.PolyHue.stores.filaments;
+        const colorOrder = project.get('colorOrder') || [];
+        const availableFilaments = filaments.get('filaments') || [];
+        
+        if (colorOrder.length === 0) {
+            this.showError('No colors to assign filaments to');
+            return;
+        }
+        
+        if (availableFilaments.length === 0) {
+            this.showError('No filaments available');
+            return;
+        }
+        
+        // Auto-assign based on color matching
+        const assignments = colorOrder.map((colorItem, index) => {
+            const bestMatch = this.findBestFilamentMatch(colorItem.color, availableFilaments);
+            return {
+                colorIndex: index,
+                colorId: colorItem.id,
+                filamentId: bestMatch.id,
+                filament: bestMatch
+            };
+        });
+        
+        // Store assignments
+        const regions = window.PolyHue.stores.regions;
+        regions.set('assignments', assignments);
+        
+        // Update filament assignments UI
+        this.updateFilamentAssignmentsUI(assignments);
+        
+        console.log('Auto-assigned filaments:', assignments);
+    }
+
+    /**
+     * Find best filament match for a color
+     * @param {Object} targetColor - Target color {r, g, b}
+     * @param {Array} filaments - Available filaments
+     * @returns {Object} Best matching filament
+     */
+    findBestFilamentMatch(targetColor, filaments) {
+        let bestMatch = filaments[0];
+        let bestDistance = Infinity;
+        
+        filaments.forEach(filament => {
+            const filamentColor = this.hexToRgb(filament.hex);
+            const distance = this.colorDistance(targetColor, filamentColor);
+            
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestMatch = filament;
+            }
+        });
+        
+        return bestMatch;
+    }
+
+    /**
+     * Calculate color distance (Euclidean distance in RGB space)
+     * @param {Object} color1 - First color {r, g, b}
+     * @param {Object} color2 - Second color {r, g, b}
+     * @returns {number} Distance
+     */
+    colorDistance(color1, color2) {
+        const dr = color1.r - color2.r;
+        const dg = color1.g - color2.g;
+        const db = color1.b - color2.b;
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+
+    /**
+     * Convert hex color to RGB
+     * @param {string} hex - Hex color string
+     * @returns {Object} RGB color {r, g, b}
+     */
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+    }
+
+    /**
+     * Update filament assignments UI
+     * @param {Array} assignments - Filament assignments
+     */
+    updateFilamentAssignmentsUI(assignments) {
+        const assignmentsContainer = document.getElementById('filament-assignments');
+        if (!assignmentsContainer) return;
+        
+        assignmentsContainer.innerHTML = '';
+        
+        assignments.forEach((assignment, index) => {
+            const assignmentItem = document.createElement('div');
+            assignmentItem.className = 'flex items-center space-x-3 p-2 bg-gray-50 rounded';
+            
+            const colorSwatch = document.createElement('div');
+            colorSwatch.className = 'w-6 h-6 rounded border border-gray-300 flex-shrink-0';
+            colorSwatch.style.backgroundColor = assignment.filament.hex;
+            
+            const assignmentInfo = document.createElement('div');
+            assignmentInfo.className = 'flex-1 text-sm';
+            assignmentInfo.innerHTML = `
+                <div class="font-medium">${assignment.filament.vendor} ${assignment.filament.name}</div>
+                <div class="text-gray-500">Color ${index + 1}</div>
+            `;
+            
+            const changeButton = document.createElement('button');
+            changeButton.className = 'text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded';
+            changeButton.textContent = 'Change';
+            changeButton.addEventListener('click', () => {
+                this.showFilamentSelectionDialog(assignment.colorIndex);
+            });
+            
+            assignmentItem.appendChild(colorSwatch);
+            assignmentItem.appendChild(assignmentInfo);
+            assignmentItem.appendChild(changeButton);
+            
+            assignmentsContainer.appendChild(assignmentItem);
+        });
+    }
+
+    /**
+     * Show filament selection dialog
+     * @param {number} colorIndex - Color index
+     */
+    showFilamentSelectionDialog(colorIndex) {
+        // Simple implementation - can be enhanced with a proper dialog
+        const filaments = window.PolyHue.stores.filaments.get('filaments') || [];
+        const filamentNames = filaments.map(f => `${f.vendor} ${f.name}`);
+        
+        const selected = prompt(`Select filament for Color ${colorIndex + 1}:\n\n${filamentNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}\n\nEnter number (1-${filamentNames.length}):`);
+        
+        if (selected) {
+            const index = parseInt(selected) - 1;
+            if (index >= 0 && index < filaments.length) {
+                this.assignFilamentToColor(colorIndex, filaments[index]);
+            }
+        }
+    }
+
+    /**
+     * Assign filament to color
+     * @param {number} colorIndex - Color index
+     * @param {Object} filament - Filament object
+     */
+    assignFilamentToColor(colorIndex, filament) {
+        const regions = window.PolyHue.stores.regions;
+        const assignments = regions.get('assignments') || [];
+        
+        // Update or add assignment
+        const existingIndex = assignments.findIndex(a => a.colorIndex === colorIndex);
+        const assignment = {
+            colorIndex: colorIndex,
+            colorId: `color-${colorIndex}`,
+            filamentId: filament.id,
+            filament: filament
+        };
+        
+        if (existingIndex >= 0) {
+            assignments[existingIndex] = assignment;
+        } else {
+            assignments.push(assignment);
+        }
+        
+        regions.set('assignments', assignments);
+        
+        // Update UI
+        this.updateFilamentAssignmentsUI(assignments);
+        
+        console.log('Assigned filament to color:', assignment);
     }
 
     /**
@@ -804,8 +1338,8 @@ class PolyHueApp {
         console.error(message, error);
         this.showError(message);
         
+        // Reset processing state without setting error in project store to prevent circular calls
         const project = window.PolyHue.stores.project;
-        project.set('error', message);
         project.set('isProcessing', false);
     }
 

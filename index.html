@@ -446,8 +446,8 @@
     <script>
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof PolyHue !== 'undefined' && PolyHue.init) {
-                PolyHue.init();
+            if (typeof window.PolyHue !== 'undefined' && window.PolyHue.init) {
+                window.PolyHue.init();
             }
         });
     </script>
