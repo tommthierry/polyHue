@@ -1,358 +1,240 @@
-# Project Specification – PolyHue
-
-**Open-Source, Web-Based Multi-Color Lithophane & Color 3D Print Generator**
-*Version 1.1 – 11 July 2025*
+Absolutely, thanks for clarifying. Here’s the **full project documentation** for your streamlined PolyHue—written for clarity, detail, and “handoff-ready” usability. This will make your expectations unmistakable for any developer (or yourself in the future).
+Let me know if you want a second version with visuals/wireframes or an even more concise “one-pager”!
 
 ---
 
-## 1. Executive Summary
+# PolyHue – Simple Multi-Color Lithophane Generator
 
-**PolyHue** is an open-source, browser-based application for converting 2D images into multi-color 3D printable models using filament painting (translucent stacking), or for AMS/multi-material color prints. The application enables both traditional color-blended lithophanes and “flat” color-mapped models for use with multi-extruder printers (Bambu AMS, Prusa MMU, etc).
-PolyHue is 100% front-end (HTML5/CSS3/JS ES Modules, Three.js) and outputs STL for FDM, plus true-color GLB/OBJ/3MF for AMS/MMU or color visualization. MIT licensed, cross-platform, runs local or online, with modern, intuitive, and mobile-friendly UI.
-
----
-
-## 2. Problem Statement & Project Goals
-
-### Problem
-
-* Closed, Windows-only, paid HueForge limits access.
-* No open tool exists to create color-mapped 3D prints for AMS/MMU with max color selection, color region merging, or true color 3D export.
-* High learning curve; current UI is not beginner friendly.
-
-### Goals
-
-| **Goal**                                     | **Success Metric**                                         |
-| -------------------------------------------- | ---------------------------------------------------------- |
-| Free, web-based, open-source alternative     | MIT-licensed, browser/device agnostic                      |
-| Full HueForge feature parity                 | All major features, plus multi-color/AMS workflow          |
-| “Max colors”/quantized export & region merge | User can pick ≤N colors and preview color-flattened result |
-| Easy multi-color 3D export                   | GLB/3MF/OBJ with colors, for AMS/multi-material slicing    |
-| Enhanced UX/UI                               | Beginner wizard, live preview, easy filament palette       |
-| Maintainability/extensibility                | Modular, clean, no heavy dependencies                      |
+**Project Documentation**
+*Version 1.0 – July 2025*
 
 ---
 
-## 3. Scope
+## 1. Overview
 
-**In Scope (MVP):**
+**PolyHue** is a browser-based tool that lets anyone convert a 2D image into a layered, multi-color lithophane 3D model, ready for 3D printing on FDM machines.
+**Key features:**
 
-* 2D image upload (PNG/JPG/SVG), cropping, basic edits.
-* Filament library, palette selection, stack order.
-* Live color blending simulation (traditional lithophane workflow).
-* “Max colors” quantization: flatten image to ≤N regions/colors, merge similar colors, preview result, and assign filament.
-* Multi-color 3D export: GLB (full color), OBJ+MTL, and experimental 3MF.
-* Traditional STL & swap instruction export for single-extruder filament-painting workflow.
-* All code runs client-side, browser-only.
-* Modern, mobile-friendly UI with visual previews and clear workflow.
-* No backend/server, no user login.
+* No login or backend—runs entirely in-browser
+* Modern, clean, and minimal UI: Three intuitive steps
+* Focus on color simplification and 3D stack creation
+* Exports in standard 3D formats for slicing and printing
 
 ---
 
-## 4. User Personas & Stakeholders
+## 2. Target Users
 
-| **Persona**                   | **Goal**                                                      |
-| ----------------------------- | ------------------------------------------------------------- |
-| Hobbyist (single-extruder)    | Color lithophane with STL + swap table, easy color simulation |
-| Multi-material user (AMS/MMU) | Flat-color print, max N colors, true-color export for slicing |
-| Designer                      | Visualize, merge, and assign colors, preview before printing  |
-| OSS developer                 | Self-host, extend, or integrate into other tools              |
+* **Hobbyist Makers:** Want an easy tool to turn photos or designs into simple, multi-color 3D prints.
+* **3D Printing Enthusiasts:** Need fast color reduction and layered modeling for AMS/MMU workflows.
+* **Educators & Designers:** Looking for a low-barrier, visual way to create color-stacked models from any image.
 
 ---
 
-## 5. Technical Overview & Assumptions
+## 3. Workflow (User Experience)
 
-* Browser: ES6+, WebGL2, OffscreenCanvas support required.
-* Targets: Desktop (Chrome, Firefox, Safari, Edge), iOS 15+, Android 13+.
-* Images up to 4096px; all calculations local; Web Workers for heavy tasks.
-* Filament/color library includes brand, hex, Transmission Distance (TD), editable/custom.
-* 3D output: STL (geometry), GLB/OBJ/MTL/3MF (geometry + color, per-region or per-vertex).
+### Step 1: Image Upload
 
-### Implementation Architecture (HTML-First)
+* User lands on a clean page with a single upload/drop zone.
+* Supported formats: PNG, JPG/JPEG (single image).
+* User uploads or drags & drops an image.
+* Instant thumbnail preview displayed.
+* Only one image at a time (previous upload is replaced if user uploads again).
 
-* **Single HTML file** with embedded CSS/JS or linked resources
-* **Third-party libraries** loaded via CDN or local files:
-  - Three.js (3D rendering, exporters)
-  - jQuery (DOM manipulation, optional)
-  - Additional utilities as needed
-* **No build process** required - runs directly in browser
-* **Modular ES6** code structure within script tags or separate JS files
-* **Web Workers** for heavy computations (color quantization, mesh generation)
+### Step 2: Color Management
 
----
+* The tool automatically reduces the image to **6 flat colors** (default), visually simplifying the image.
+* User sees a visual preview with distinct color regions.
+* User can adjust:
 
-## 6. User Workflow
+  * **Number of colors**: From 1 (all-black/white/flat) up to 10 max, with a slider or +/- buttons.
+  * **Color details per region**:
 
-1. **Import Image:** User uploads PNG/JPEG (SVG converted), sets cropping, rotation, brightness, contrast, background removal as needed.
+    * Change hue (with a color picker per color).
+    * Drag-and-drop to reorder colors (order determines vertical position in the model).
+    * Delete colors (cannot delete last color).
+    * Add colors (re-quantize up to max).
+    * Adjust each color’s range (slider—controls “how much” of the image each color covers; total must sum to 100%).
+* The preview updates instantly as settings change.
+* The UI here is visual only: **no 3D, just 2D flat color preview**.
 
-2. **Start Processing:** User clicks "Start" button to begin color quantization process.
-   - Image is automatically processed to default 8 colors (user can adjust from 2-12 colors)
-   - Algorithm creates distinct color regions using K-means or Median Cut clustering
-   - User can see immediate preview of quantized color regions
+### Step 3: 3D Model Creation & Export
 
-3. **Color Organization & Configuration:**
-   - **Drag & Drop Height Order:** User can drag and drop colors to organize them in the order of height for the 3D render (lowest to highest)
-   - **Add Colors:** User can add additional colors to the palette (up to 12 total)
-   - **Delete Colors:** User can remove colors from the palette
-   - **Color Replacement:** User can click on any color to open color picker and replace it with a different color
-   - **Auto-Edit Render:** Any changes to colors or height order automatically updates the 3D render in real-time
+* After accepting color settings, user moves to the modeling phase.
+* Each color corresponds to a **vertical layer** in the 3D model:
 
-4. **Filament Assignment (Optional):**
-   - User can assign specific filament types to each color for material reference
-   - Filament database provides realistic color matching and printing properties
+  * Color at position 0 = bottom, fills full model footprint.
+  * Each color above forms a horizontal “slab” of configurable height.
+* For each color:
 
-5. **3D Model Generation:**
-   - Each color becomes a height layer in the 3D model
-   - Height is determined by the order specified by the user (drag & drop sequence)
-   - Model generates automatically as user makes changes
+  * User can set height (mm) with a slider or input box.
+  * User can continue to reorder colors as needed.
+* Live 3D preview (Three.js):
 
-6. **WebGL 3D Preview:**
-   - Interactive 3D view showing the final model with accurate colors and heights
-   - Users can rotate, zoom, and inspect the model before export
-   - Real-time updates as user modifies colors or height order
+  * The model is shown as a stack of colored slabs/layers, matching user order and heights.
+  * User can rotate, zoom, and inspect the model.
+  * Any change (order, height) updates preview instantly.
+* Export panel lets user download:
 
-7. **Export Options:**
-   - Multiple format support as listed in documentation
-   - **Multi-Color Formats:** GLB (.glb), OBJ+MTL, 3MF (.3mf) with per-region colors
-   - **Single-Color Formats:** STL with height mapping
-   - **Documentation:** Layer height instructions, color swap tables
-   - **Project Files:** JSON project file for later editing
-
-### Key Features:
-- **Real-time Processing:** All changes reflect immediately in the 3D preview
-- **Intuitive Interface:** Drag & drop color organization, visual height mapping
-- **Flexible Configuration:** Add/remove colors, change color values, adjust height order
-- **Professional Export:** Multiple industry-standard formats for various 3D printing workflows
+  * STL (geometry only)
+  * GLB (geometry + per-layer color)
+  * OBJ+MTL (optional, legacy color export)
+  * PNG (flat color preview)
+  * Option to download all as ZIP
 
 ---
 
-## 7. Functional Requirements
+## 4. Functional Requirements
 
-### 7.1 Image Import
+### 4.1 Image Handling
 
-* Accept PNG, JPEG (minimum), SVG (rasterized).
-* File size/resolution warnings; auto-downscale if over 4096px.
-* Editing: crop, rotate, flip, brightness, contrast, background removal.
+* Accept only PNG/JPG files up to a max resolution (suggested: 4096px; auto-downscale/warn if exceeded).
+* Only one image can be active at a time.
+* Delete/replace previous image on new upload.
+* Show error messages for unsupported types or sizes.
 
-### 7.2 Print Mode Selection
+### 4.2 Color Quantization & Editing
 
-* User chooses:
+* Automatic quantization on image load to 6 colors.
+* Allow user to:
 
-  * “Color Lithophane (Filament Blending)”
-  * “Multi-Color Flat Print (AMS/MMU)”
-* UI adapts: exposes relevant controls for each.
+  * Increase/decrease number of colors (re-quantize each time).
+  * See all detected colors as editable swatches.
+  * Change a color’s hue using a color picker (overrides quantized color).
+  * Drag and drop color swatches to change their order (affects model stack).
+  * Delete/add colors (must always have at least 1, no more than 10).
+  * Adjust how much of the image each color covers with a percentage slider—distribution must always total 100%.
+* Image preview updates instantly with changes.
 
-### 7.3 Max Colors / Color Quantization
+### 4.3 3D Model Generation
 
-* User sets desired max number of colors (N).
-* App analyzes image, clusters/merges similar colors into ≤N “regions” (using K-means, Median Cut, or similar algorithm).
-* Merged color preview displayed: user can see effect before export.
-* Each color region is assigned a filament color (auto-mapped to closest, user can override).
-* Visual: Region map overlays on preview; palette shows mapping (e.g. “Region 2: Red → Polymaker Panchroma Red”).
+* After color config, each color becomes a Z-layer of the model.
+* For each color:
 
-### 7.4 Filament Palette and Assignment
+  * User sets height in mm (number input or slider).
+  * Default: heights evenly distributed to total model height (e.g., 12mm / 6 colors = 2mm each).
+* Drag and drop order determines which color is on the bottom/top.
+* The model is a stack of rectangles/pixels in the shape of the original image, with each pixel assigned the color/layer it belongs to.
+* 3D preview updates live with all changes.
 
-* Built-in filament/color library: vendor, name, HEX, TD.
-* Add/edit/delete filaments; import/export CSV/JSON.
-* Drag-drop assign filaments to regions (color mode) or to stack order (lithophane).
-* In color mode, warn if fewer filaments than regions (require at least as many, or auto-reduce regions).
+### 4.4 Export
 
-### 7.5 Layer & Print Settings
+* Export the model as:
 
-* **Lithophane:** Layer height (e.g. 0.08mm), min/max thickness, blending algorithm.
-* **Color/AMS:** Uniform model thickness (default 1.2–2.0mm); user can also select lithophane-like Z if desired (advanced).
-* Optional: Toggle for dithering/halftone (future).
-
-### 7.6 Preview
-
-* Live color preview:
-
-  * Lithophane mode: Simulates blended color appearance under backlight.
-  * Multi-color mode: Region map with filament colors, accurate to print outcome.
-* 3D geometry preview:
-
-  * Both modes; shows mesh with assigned colors per region or per-vertex (for gradients/dithering).
-* All previews update in real-time (<1s), mobile-friendly.
-
-### 7.7 Export
-
-* **Lithophane Mode:**
-
-  * STL (geometry, monochrome, variable thickness),
-  * TXT swap table (heights, layer#),
-  * PNG preview,
-  * JSON project.
-* **Multi-Color/AMS Mode:**
-
-  * GLB (.glb): Geometry + per-region/per-vertex color, ready for color slicing in Prusa/Bambu.
-  * OBJ+MTL: Each region as separate material, flat color (legacy, always generated if GLB done).
-  * 3MF (.3mf, beta): Full color/region mapping for modern multi-material slicers.
-  * All color files should open with assigned region colors in PrusaSlicer/Bambu Studio and allow color assignment for extruders/AMS slots.
-* UI: Export tab with all format options, clear labeling of use case (e.g. “GLB (Color 3D, Recommended)”).
-* Option: ZIP archive with all outputs for download.
-
-### 7.8 Visual & User Experience
-
-* UI guides user through workflow: import → mode select → quantize/assign → preview → export.
-* All assignments visually represented: color palette, region map, model colors.
-* Tooltips/help for every control.
-* Easy region-color reassignment (e.g. click region on preview to pick filament).
-* Progress bars/spinners for long tasks; error messages for invalid settings (e.g. more regions than filaments).
-* Accessibility: Keyboard, ARIA, readable color names.
+  * **STL**: For monochrome prints; Z heights as configured.
+  * **GLB**: For full-color slicing (e.g., Bambu AMS, Prusa MMU); each layer has its assigned color.
+  * **OBJ+MTL**: Legacy color file.
+  * **PNG**: Flat color preview for sharing or reference.
+  * **ZIP**: All above files as a bundle.
+* Exports must work in standard slicers (PrusaSlicer, Bambu Studio).
+* Exports are all local/browser-side—no server or user data collection.
 
 ---
 
-## 8. Algorithmic/Implementation Details
+## 5. Non-Functional Requirements
 
-### 8.1 Color Quantization
-
-* Quantize image to N colors/regions using K-means or Median Cut (browser JS, or Web Worker).
-* For each region, store original color, area (pixel count), and average/representative color.
-* Merge regions with perceptually similar colors (e.g. orange with red, blue with cyan) if N < #unique.
-* Assign each region to the closest filament color (Euclidean or LAB distance); allow user override.
-
-### 8.2 Color 3D Export
-
-* Build 3D mesh (heightmap for lithophane, flat for AMS).
-* For each color region:
-
-  * Assign color (hex) as per assigned filament.
-  * Export formats:
-
-    * **GLB**: BufferGeometry with vertex colors (`geometry.setAttribute('color', ...)`); use [GLTFExporter](https://threejs.org/docs/#examples/en/exporters/GLTFExporter).
-    * **OBJ/MTL**: Each region as separate mesh/material, assign flat color (Three.js OBJExporter).
-    * **3MF (beta)**: Use community JS packages (e.g. @jscadui/3mf-export or three-3mf-exporter); wrap in Web Worker for performance.
-* For lithophane mode, color export optional (enabled if user wants a “reference” color STL or AMS slicing).
-* Validation: Exported files must show correct region colors in PrusaSlicer/Bambu Studio, allow for extruder slot assignment.
-
-### 8.3 Preview & Region Mapping
-
-* Overlay preview: Show quantized region map with filament color; click to select/edit assignment.
-* On export, model colors must match assignments shown in preview.
-* For dithering/gradient (future): use per-vertex color in GLB/PLY export.
-
-### 8.4 Export UI
-
-* Export tab:
-
-  * Checkbox/select for each file format (GLB, OBJ+MTL, STL, 3MF beta).
-  * Show which mode(s) support each (e.g. “GLB: Multi-color AMS / Color visualization”).
-  * Download all as ZIP.
-* Feature flag: 3MF export “beta”, hide behind toggle or advanced menu.
+* **Performance**: All previews <1s; export <10s for large images.
+* **Compatibility**: Chrome, Firefox, Safari, Edge on desktop and mobile.
+* **Accessibility**: Keyboard navigation, readable labels, ARIA tags.
+* **Security**: All processing stays in-browser; no uploads or cloud storage.
+* **Maintainability**: Modular, ES6+ JavaScript; clear comments and code style.
 
 ---
 
-## 9. Data Models
+## 6. UI & UX Guidelines
 
-**Filament:**
+* **Minimal UI:**
+  Step-by-step, “one thing at a time” (upload → colors → 3D/export).
+* **Visual Feedback:**
+  Every change is reflected instantly (image/3D preview).
+* **Clear Controls:**
+  Obvious buttons for Next/Back, clear labels for all inputs, tooltips for non-obvious functions.
+* **Progress/Stepper:**
+  Visual indicator of step 1/2/3; can’t skip ahead without completing previous.
+* **Responsiveness:**
+  Works on mobile and desktop; drag and drop for touch and mouse.
+* **Error Handling:**
+  Clear, non-intrusive error messages for file type/size or processing issues.
+
+---
+
+## 7. Data Structures
+
+### Color Region
 
 ```js
 {
-  id: 'uuid',
-  vendor: 'Polymaker',
-  name: 'Translucent Red',
-  hex: '#FF3322',
-  td: 12.0
+  id: Number,          // Unique region index
+  hex: String,         // HEX color value
+  percent: Number,     // How much of image (0-100)
+  custom: Boolean,     // Was user-edited
+  height: Number       // mm, for stacking in model
 }
 ```
 
-**Region:**
+### Project State
 
 ```js
 {
-  id: 2,
-  avgColor: '#F06A2C', // quantized
-  assignedFilament: 'uuid', // maps to filament
-  pixelCount: 5000
-}
-```
-
-**Project:**
-
-```js
-{
-  mode: 'color'|'lithophane',
-  maxColors: 4,
-  regions: [...],
-  filaments: [...],
-  settings: { layerHeight, minThickness, ... },
-  image: { src, width, height }
+  image: { src, width, height },
+  colors: [ColorRegion],
+  totalHeight: Number,       // Total model height (mm)
+  exportSettings: { ... }    // STL, GLB, PNG, etc.
 }
 ```
 
 ---
 
-## 10. Non-Functional Requirements
+## 8. Algorithms & Implementation
 
-* Performance: <2s for preview, <10s for large exports (4096px); use Web Workers.
-* Code: Modular ES6+, clean, well-commented, ESLint/prettier, unit tests.
-* Browser compatibility: Chrome, Firefox, Edge, Safari (desktop/mobile).
-* Accessibility: WCAG 2.2 AA.
-* Security: No data leaves browser.
+* **Color Quantization**:
+  Use K-means, Median Cut, or reliable JS library (e.g., [quantize.js](https://github.com/lokesh/color-thief)) for fast, in-browser palette reduction.
+* **Color Assignment/Editing**:
+  All colors adjustable post-quantization with live update.
+* **3D Model Construction**:
 
----
-
-## 11. Export Format Table
-
-| Format  | Color Support             | Target Use                   | Library/Status                      |
-| ------- | ------------------------- | ---------------------------- | ----------------------------------- |
-| STL     | No (geometry only)        | Lithophane (single-extruder) | Core, always available              |
-| TXT     | N/A (instructions)        | Swap-by-layer printing       | Core, always available              |
-| GLB     | Full: per-vertex/region   | AMS/MMU, Color ref, Viz      | Three.js GLTFExporter, MVP required |
-| OBJ/MTL | Per-region material color | Legacy/compat                | Three.js OBJExporter, free with GLB |
-| 3MF (β) | Full: per-region          | AMS/MMU, advanced            | JS libs, behind feature flag        |
-| PNG     | Color preview             | Visual ref/share             | Core, always available              |
+  * For each pixel, assign Z based on the region/color it’s in and height config.
+  * Use Three.js for rendering preview and exporting mesh in all formats.
+* **Export**:
+  Use Three.js’s STL and GLTF exporters; add OBJ+MTL as needed.
+* **Preview/UX**:
+  All image changes instantly re-render the color preview and (at 3D stage) the model.
 
 ---
 
-## 12. Testing, QA, and Validation
+## 9. Example User Flow
 
-* Unit tests: quantization, color region assignment, export logic.
-* Integration: Test GLB/3MF/OBJ in PrusaSlicer 2.8+, Bambu Studio 1.9+.
-* Manual: Export region maps, validate colors visually in slicers.
-* Usability: 5 users must successfully complete both workflows (lithophane and color flatten/AMS) without written instructions.
-* SUS >80.
-
----
-
-## 13. Risks & Mitigations
-
-| **Risk**                              | **Mitigation**                                   |
-| ------------------------------------- | ------------------------------------------------ |
-| Export files too large (many regions) | Hard cap region count (e.g. max 12); warn if big |
-| Color assignment errors               | User override, clear preview                     |
-| 3MF unstable in browser               | “Beta” feature flag, fallback to GLB/OBJ         |
-| Non-matching colors in slicers        | Use standard sRGB; test all exporters            |
+1. **Open PolyHue:**
+   See “Upload image” screen.
+2. **Upload an image:**
+   File loads, user sees color-reduced preview.
+3. **Adjust Colors:**
+   Change number of colors, tweak hues, reorder layers, fine-tune percentages and color dominance.
+4. **Go to 3D:**
+   Assign heights per color, drag to change stack order, inspect 3D preview.
+5. **Export:**
+   Download model in chosen format(s) and go print!
 
 ---
 
-## 14. UI/UX Examples
+## 10. Out of Scope (for this MVP)
 
-**Export tab:**
-
-```
-Export Options
-[✓] STL (Lithophane, for all FDM printers)
-[✓] GLB (.glb, color 3D for AMS/MMU/multicolor)
-[ ] OBJ + MTL (.obj/.mtl, legacy slicer color)
-[ ] 3MF (.3mf, beta – full color for AMS/MMU)
-
-[Export All as ZIP]    [Download individually]
-```
-
-**Region Preview:**
-
-* Image overlay with color blocks, each block shows assigned filament swatch and name.
-* Click region to reassign filament color.
-* Tooltip: “Region 4: Orange (Merged: Red + Yellow), Assigned: Prusament Orange”
+* Multi-material slicing “swap tables”
+* True “lithophane” (variable thickness, light blending)—this is a simple height stack, not continuous grayscale
+* User accounts, project history, cloud saves
+* Advanced filament palette libraries (could be added later)
+* Dithering/gradient or alpha layers (MVP is flat per-region)
 
 ---
 
-## 15. References
+## 11. References & Inspiration
 
-* [HueForge FAQ and Filament Painting](https://shop.thehueforge.com/pages/hueforge-faq)
-* [Polymaker Wiki: HueForge Filament Data](https://wiki.polymaker.com/en/HueforgePainting)
-* [Three.js Exporters: GLTF, OBJ](https://threejs.org/docs/)
-* [JS 3MF Export: @jscadui/3mf-export](https://github.com/jscadui/jscadui)
-* [Prusa Knowledge: Color 3D printing](https://help.prusa3d.com/guide/color-printing-mmu2s_1803)
-* [Bambu Studio Multi-color Print Guides](https://wiki.bambulab.com/en/software/studio/color/)
+* [HueForge](https://shop.thehueforge.com/)
+* [Color Thief/Quantize.js](https://github.com/lokesh/color-thief)
+* [Three.js Exporters](https://threejs.org/docs/#manual/en/introduction/Creating-and-exporting-3D-models)
+* [Prusa Knowledge: Color 3D Printing](https://help.prusa3d.com/guide/color-printing-mmu2s_1803)
+* [Bambu Studio Color Docs](https://wiki.bambulab.com/en/software/studio/color/)
+
+---
+
+**End of Documentation**
+If you want, I can add user stories, mockup sketches, UI texts, or turn this into a ready-to-go `PROJECT.md` file for your repo. Just tell me how you want it packaged or if you need deeper technical breakdowns!
