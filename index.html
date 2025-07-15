@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyHue - Multi-Color 3D Model Generator</title>
+    <meta name="description" content="Convert 2D images into multi-color 3D models for FDM 3D printing">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Preload critical libraries -->
+    <link rel="preload" href="https://unpkg.com/colorthief@2.4.0/dist/color-thief.umd.js" as="script" crossorigin>
+    <link rel="preload" href="https://unpkg.com/chroma-js@2.4.2/chroma.min.js" as="script" crossorigin>
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <span class="logo-icon">🎨</span>
+                    PolyHue
+                </h1>
+                <p class="tagline">Transform images into multi-color 3D models</p>
+            </div>
+        </header>
+
+        <!-- Progress Steps -->
+        <nav class="progress-nav" aria-label="Progress">
+            <div class="container">
+                <ol class="progress-steps">
+                    <li class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-label">Upload Image</span>
+                    </li>
+                    <li class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-label">Edit Colors</span>
+                    </li>
+                    <li class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-label">3D Model & Export</span>
+                    </li>
+                </ol>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                
+                <!-- Step 1: Image Upload -->
+                <section id="step-1" class="step-content active" data-step="1">
+                    <div class="step-header">
+                        <h2>Upload Your Image</h2>
+                        <p>Choose a PNG or JPG image to convert into a 3D model</p>
+                    </div>
+                    
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <h3>Drop your image here</h3>
+                            <p>or <button type="button" class="upload-button" id="upload-button">click to browse</button></p>
+                            <input type="file" id="image-input" accept="image/png,image/jpeg" hidden>
+                            <small>Supports PNG and JPG files up to 4096px</small>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-preview" id="upload-preview" hidden>
+                        <div class="preview-container">
+                            <img id="preview-image" alt="Uploaded image preview">
+                            <div class="preview-info">
+                                <h4 id="image-filename"></h4>
+                                <p id="image-dimensions"></p>
+                                <button type="button" class="btn btn-secondary" id="change-image">Change Image</button>
+                            </div>
+                        </div>
+                        <div class="step-actions">
+                            <button type="button" class="btn btn-primary" id="proceed-to-colors">
+                                Next: Edit Colors →
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 2: Color Management -->
+                <section id="step-2" class="step-content" data-step="2">
+                    <div class="step-header">
+                        <h2>Manage Colors</h2>
+                        <p>Adjust colors and their distribution for your 3D model</p>
+                    </div>
+                    
+                    <div class="color-editor">
+                        <div class="color-controls">
+                            <div class="control-group">
+                                <label for="color-count">Number of Colors</label>
+                                <div class="color-count-control">
+                                    <button type="button" class="btn btn-small" id="decrease-colors">−</button>
+                                    <input type="range" id="color-count" min="1" max="10" value="6">
+                                    <button type="button" class="btn btn-small" id="increase-colors">+</button>
+                                    <span class="color-count-value">6</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <button type="button" class="btn btn-secondary" id="reanalyze-image" title="Extract fresh colors from the image">
+                                    🔄 Re-analyze Image
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-layout">
+                            <div class="preview-panel">
+                                <h3>Color Preview</h3>
+                                <canvas id="color-preview-canvas"></canvas>
+                            </div>
+                            
+                            <div class="color-panel">
+                                <h3>Color Layers</h3>
+                                <div id="color-list" class="color-list">
+                                    <!-- Color items will be generated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-secondary" id="back-to-upload">
+                            ← Back to Upload
+                        </button>
+                        <button type="button" class="btn btn-primary" id="proceed-to-3d">
+                            Next: Create 3D Model →
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Step 3: 3D Model & Export -->
+                <section id="step-3" class="step-content" data-step="3">
+                    <div class="step-header">
+                        <h2>3D Model & Export</h2>
+                        <p>Configure layer heights and export your 3D model</p>
+                    </div>
+                    
+                    <div class="model-editor">
+                        <div class="model-layout">
+                            <div class="viewport-panel">
+                                <h3>3D Preview</h3>
+                                <div id="three-viewport" class="three-viewport"></div>
+                                <div class="viewport-controls">
+                                    <button type="button" class="btn btn-small" id="reset-camera">Reset View</button>
+                                    <button type="button" class="btn btn-small" id="toggle-wireframe">Wireframe</button>
+                                </div>
+                            </div>
+                            
+                            <div class="layer-panel">
+                                <h3>Layer Configuration</h3>
+                                <div class="total-height-control">
+                                    <label for="total-height">Total Height (mm)</label>
+                                    <input type="number" id="total-height" value="12" min="1" max="50" step="0.1">
+                                </div>
+                                <div id="layer-list" class="layer-list">
+                                    <!-- Layer items will be generated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="export-section">
+                        <h3>Export Your Model</h3>
+                        <div class="export-options">
+                            <button type="button" class="btn btn-export" id="export-stl">
+                                📄 Export STL
+                            </button>
+                            <button type="button" class="btn btn-export" id="export-glb">
+                                🎨 Export GLB (Color)
+                            </button>
+                            <button type="button" class="btn btn-export" id="export-obj">
+                                📐 Export OBJ+MTL
+                            </button>
+                            <button type="button" class="btn btn-export" id="export-png">
+                                🖼️ Export PNG Preview
+                            </button>
+                            <button type="button" class="btn btn-export" id="export-zip">
+                                📦 Download All (ZIP)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-secondary" id="back-to-colors">
+                            ← Back to Colors
+                        </button>
+                        <button type="button" class="btn btn-primary" id="start-over">
+                            🔄 Start Over
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: flex;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loading-message">Loading PolyHue...</p>
+                <small style="color: var(--color-text-muted); margin-top: var(--space-2);">Initializing application</small>
+            </div>
+        </div>
+
+        <!-- Error Messages -->
+        <div id="error-toast" class="error-toast" hidden>
+            <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <span id="error-message"></span>
+                <button type="button" class="error-close" id="error-close">×</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- External Libraries -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.178.0/three.module.min.js",
+            "three/examples/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/"
+        }
+    }
+    </script>
+    
+    <script src="https://unpkg.com/colorthief@2.4.0/dist/color-thief.umd.js" crossorigin></script>
+    <script src="https://unpkg.com/chroma-js@2.4.2/chroma.min.js" crossorigin></script>
+    
+    <!-- Application Scripts -->
+    <!-- JavaScript - Load in dependency order -->
+    <script src="js/types.js"></script>
+    <script src="js/utils/imageProcessor.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
