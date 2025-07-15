@@ -22,6 +22,9 @@ body {
     line-height: 1.6;
     color: var(--color-text-primary);
     background: var(--color-background);
+    /* Subtle fun background pattern */
+    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.075) 1px, transparent 1px);
+    background-size: 24px 24px;
     min-height: 100vh;
 }
 

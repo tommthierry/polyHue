@@ -317,6 +317,19 @@
     padding: var(--space-4);
 }
 
+/* Keep preview visible when scrolling long color lists */
+.preview-panel {
+    position: sticky;
+    top: var(--space-6);
+    align-self: start;
+}
+
+/* Allow color lists to scroll independently */
+.color-panel {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
 .preview-panel h3,
 .color-panel h3 {
     margin: 0 0 var(--space-4) 0;
