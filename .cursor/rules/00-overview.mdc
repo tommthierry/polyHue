@@ -31,4 +31,4 @@ When generating code or explanations:
 
 
 # Local Setup
-We are in a wsl environment so if you want to execute command do not forget about this.
+We are in a WSL environment, so keep that in mind when running commands.
