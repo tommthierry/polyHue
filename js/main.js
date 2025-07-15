@@ -1009,10 +1009,9 @@ class PolyHueApp {
     handleDrop(event) {
         event.preventDefault();
         this.elements.uploadArea?.classList.remove('drag-over');
-        
+
         const files = event.dataTransfer.files;
         if (files.length > 0) {
-            this.elements.imageInput.files = files;
             this.handleImageUpload({ target: { files } });
         }
     }
