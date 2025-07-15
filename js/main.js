@@ -7,7 +7,7 @@
 
 // Dependencies loaded via script tags:
 // - types.js provides window.APP_CONSTANTS, window.EXPORT_EXTENSIONS
-// - window.ImageProcessor.js provides window.ImageProcessor
+// - js/utils/imageProcessor.js provides window.ImageProcessor
 
 /**
  * Main PolyHue Application Class
