@@ -1012,7 +1012,9 @@ class PolyHueApp {
         
         const files = event.dataTransfer.files;
         if (files.length > 0) {
-            this.elements.imageInput.files = files;
+            // Directly forward the file list to the upload handler.
+            // The `files` property of an input element is read‑only,
+            // so we cannot assign to `this.elements.imageInput.files`.
             this.handleImageUpload({ target: { files } });
         }
     }
