@@ -50,6 +50,11 @@ class PolyHueApp {
         this.showError = this.showError.bind(this);
         this.showLoading = this.showLoading.bind(this);
         this.hideLoading = this.hideLoading.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleDragLeave = this.handleDragLeave.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
+        this.hideError = this.hideError.bind(this);
+        this.reanalyzeImage = this.reanalyzeImage.bind(this);
 
         // Initialize the application
         this.init();
@@ -147,6 +152,476 @@ class PolyHueApp {
             errorMessage: document.getElementById('error-message'),
             errorClose: document.getElementById('error-close')
         };
+        
+        // Initialize micro-interactions after caching elements
+        this.initializeMicroInteractions();
+    }
+    
+    /**
+     * Initialize delightful micro-interactions
+     */
+    initializeMicroInteractions() {
+        // Add ripple effect to buttons
+        this.addRippleEffect();
+        
+        // Add smooth scrolling to color list
+        this.enhanceScrolling();
+        
+        // Add loading states to buttons
+        this.enhanceButtonStates();
+        
+        // Add particle effects to upload area
+        this.enhanceUploadArea();
+        
+        // Add color harmony animations
+        this.addColorAnimations();
+        
+        // Add 3D hover effects
+        this.add3DHoverEffects();
+        
+        // Add success celebrations
+        this.setupSuccessAnimations();
+    }
+    
+    /**
+     * Add ripple effect to buttons
+     */
+    addRippleEffect() {
+        const buttons = document.querySelectorAll('.btn');
+        
+        buttons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const ripple = document.createElement('span');
+                const rect = button.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.6);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: ${size}px;
+                    height: ${size}px;
+                    pointer-events: none;
+                `;
+                
+                // Add ripple animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes ripple {
+                        to {
+                            transform: scale(4);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                if (!document.querySelector('#ripple-styles')) {
+                    style.id = 'ripple-styles';
+                    document.head.appendChild(style);
+                }
+                
+                button.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    }
+    
+    /**
+     * Enhance scrolling with smooth momentum
+     */
+    enhanceScrolling() {
+        const scrollableElements = document.querySelectorAll('.color-list, .layer-list');
+        
+        scrollableElements.forEach(element => {
+            let isScrolling = false;
+            
+            element.addEventListener('scroll', () => {
+                if (!isScrolling) {
+                    isScrolling = true;
+                    element.style.scrollBehavior = 'smooth';
+                    
+                    setTimeout(() => {
+                        isScrolling = false;
+                    }, 150);
+                }
+            });
+            
+            // Add scroll indicator
+            const indicator = document.createElement('div');
+            indicator.style.cssText = `
+                position: absolute;
+                right: 0;
+                top: 0;
+                width: 2px;
+                background: var(--gradient-primary);
+                border-radius: 1px;
+                transition: opacity 0.3s ease;
+                opacity: 0;
+                z-index: 10;
+                pointer-events: none;
+            `;
+            
+            element.style.position = 'relative';
+            element.appendChild(indicator);
+            
+            element.addEventListener('scroll', () => {
+                const scrollPercent = element.scrollTop / (element.scrollHeight - element.clientHeight);
+                const height = Math.max(20, element.clientHeight * 0.3);
+                const top = scrollPercent * (element.clientHeight - height);
+                
+                indicator.style.height = `${height}px`;
+                indicator.style.top = `${top}px`;
+                indicator.style.opacity = element.scrollTop > 0 ? '0.7' : '0';
+            });
+        });
+    }
+    
+    /**
+     * Enhance button states with loading animations
+     */
+    enhanceButtonStates() {
+        const enhanceButton = (button, loadingText) => {
+            const originalText = button.textContent;
+            
+            const showLoading = () => {
+                button.classList.add('loading');
+                button.disabled = true;
+                if (loadingText) {
+                    button.setAttribute('data-original-text', originalText);
+                    button.textContent = loadingText;
+                }
+            };
+            
+            const hideLoading = () => {
+                button.classList.remove('loading');
+                button.disabled = false;
+                if (button.hasAttribute('data-original-text')) {
+                    button.textContent = button.getAttribute('data-original-text');
+                    button.removeAttribute('data-original-text');
+                }
+            };
+            
+            button._showLoading = showLoading;
+            button._hideLoading = hideLoading;
+        };
+        
+        // Enhance specific buttons
+        if (this.elements.proceedToColorsBtn) {
+            enhanceButton(this.elements.proceedToColorsBtn, 'Processing...');
+        }
+        if (this.elements.proceedTo3dBtn) {
+            enhanceButton(this.elements.proceedTo3dBtn, 'Building 3D...');
+        }
+        if (this.elements.reanalyzeImageBtn) {
+            enhanceButton(this.elements.reanalyzeImageBtn, 'Analyzing...');
+        }
+        
+        // Enhance export buttons
+        const exportButtons = [
+            this.elements.exportStlBtn,
+            this.elements.exportGlbBtn,
+            this.elements.exportObjBtn,
+            this.elements.exportPngBtn,
+            this.elements.exportZipBtn
+        ].filter(Boolean);
+        
+        exportButtons.forEach(button => {
+            enhanceButton(button, 'Exporting...');
+        });
+    }
+    
+    /**
+     * Enhance upload area with particle effects
+     */
+    enhanceUploadArea() {
+        if (!this.elements.uploadArea) return;
+        
+        const createParticle = (x, y) => {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: var(--gradient-warm);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1;
+                left: ${x}px;
+                top: ${y}px;
+                animation: float-particle 2s ease-out forwards;
+            `;
+            
+            // Add particle animation
+            if (!document.querySelector('#particle-styles')) {
+                const style = document.createElement('style');
+                style.id = 'particle-styles';
+                style.textContent = `
+                    @keyframes float-particle {
+                        0% {
+                            transform: translate(0, 0) scale(1);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translate(${(Math.random() - 0.5) * 50}px, -30px) scale(0);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            this.elements.uploadArea.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 2000);
+        };
+        
+        this.elements.uploadArea.addEventListener('dragover', (e) => {
+            if (Math.random() < 0.1) { // 10% chance per dragover event
+                const rect = this.elements.uploadArea.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                createParticle(x, y);
+            }
+        });
+    }
+    
+    /**
+     * Add color harmony animations
+     */
+    addColorAnimations() {
+        const animateColorChange = (element, newColor) => {
+            if (!element) return;
+            
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: ${newColor};
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                border-radius: inherit;
+                pointer-events: none;
+            `;
+            
+            element.style.position = 'relative';
+            element.appendChild(overlay);
+            
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                
+                setTimeout(() => {
+                    element.style.backgroundColor = newColor;
+                    overlay.remove();
+                }, 300);
+            });
+        };
+        
+        // Store original function for color changes
+        this._originalAnimateColorChange = animateColorChange;
+    }
+    
+    /**
+     * Add 3D hover effects
+     */
+    add3DHoverEffects() {
+        const elements3D = document.querySelectorAll('.color-item, .layer-item, .btn');
+        
+        elements3D.forEach(element => {
+            element.addEventListener('mousemove', (e) => {
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                
+                const rect = element.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(5px)`;
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                element.style.transform = '';
+            });
+        });
+    }
+    
+    /**
+     * Setup success animations
+     */
+    setupSuccessAnimations() {
+        this.celebrateSuccess = (message) => {
+            // Create confetti effect
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        width: 8px;
+                        height: 8px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        top: -10px;
+                        left: ${Math.random() * 100}vw;
+                        z-index: 10000;
+                        border-radius: 50%;
+                        pointer-events: none;
+                        animation: confetti-fall 3s ease-out forwards;
+                    `;
+                    
+                    // Add confetti animation
+                    if (!document.querySelector('#confetti-styles')) {
+                        const style = document.createElement('style');
+                        style.id = 'confetti-styles';
+                        style.textContent = `
+                            @keyframes confetti-fall {
+                                0% {
+                                    transform: translateY(-10px) rotate(0deg);
+                                    opacity: 1;
+                                }
+                                100% {
+                                    transform: translateY(100vh) rotate(360deg);
+                                    opacity: 0;
+                                }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 50);
+            }
+            
+            // Show success message
+            if (message) {
+                this.showSuccessMessage(message);
+            }
+        };
+    }
+    
+    /**
+     * Show success message with animation
+     */
+    showSuccessMessage(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: var(--space-6);
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--gradient-secondary);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            z-index: 10000;
+            font-weight: var(--font-weight-semibold);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        `;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        });
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(-50%) translateY(-100px)';
+            toast.style.opacity = '0';
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 3000);
+    }
+    
+    /**
+     * Enhanced step change with animations
+     */
+    changeStep(newStep) {
+        if (newStep === this.state.currentStep) return;
+
+        // Validate step change
+        if (newStep === 2 && !this.state.image) {
+            this.showError('Please upload an image first.');
+            return;
+        }
+
+        if (newStep === 3 && (!this.state.colors || this.state.colors.length === 0)) {
+            this.showError('Please configure colors first.');
+            return;
+        }
+
+        // Add loading animation for step transitions
+        if (this.elements.proceedToColorsBtn && newStep === 2) {
+            this.elements.proceedToColorsBtn._showLoading?.();
+            setTimeout(() => {
+                this.elements.proceedToColorsBtn._hideLoading?.();
+            }, 1000);
+        }
+        
+        if (this.elements.proceedTo3dBtn && newStep === 3) {
+            this.elements.proceedTo3dBtn._showLoading?.();
+            setTimeout(() => {
+                this.elements.proceedTo3dBtn._hideLoading?.();
+            }, 1500);
+        }
+
+        // Animate step transition
+        const currentContent = document.querySelector('.step-content.active');
+        if (currentContent) {
+            currentContent.style.opacity = '0';
+            currentContent.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                this.state.currentStep = newStep;
+                this.updateUI();
+                
+                const newContent = document.querySelector('.step-content.active');
+                if (newContent) {
+                    newContent.style.opacity = '0';
+                    newContent.style.transform = 'translateY(20px)';
+                    
+                    requestAnimationFrame(() => {
+                        newContent.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                        newContent.style.opacity = '1';
+                        newContent.style.transform = 'translateY(0)';
+                    });
+                }
+                
+                // Celebrate major milestones
+                if (newStep === 3) {
+                    setTimeout(() => {
+                        this.celebrateSuccess('🎉 Ready to create your 3D model!');
+                    }, 800);
+                }
+            }, 300);
+        } else {
+            this.state.currentStep = newStep;
+            this.updateUI();
+        }
     }
 
     /**
@@ -311,25 +786,29 @@ class PolyHueApp {
                             }));
                             
                             console.log(`Extracted ${this.state.colors.length} colors from image`);
+                            
+                            // Update UI and color preview
+                            this.updateUI();
+                            
                             this.hideLoading();
-                        } catch (colorError) {
-                            console.error('ColorThief extraction failed:', colorError);
-                            this.fallbackColorExtraction(imageData);
-                        }
+                                            } catch (colorError) {
+                        console.error('ColorThief extraction failed:', colorError);
+                        this.fallbackColorExtraction(imageData, window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                    }
                     };
                     
-                    tempImg.onerror = () => {
-                        console.warn('Failed to load image for ColorThief, using fallback');
-                        this.fallbackColorExtraction(imageData);
-                    };
+                                    tempImg.onerror = () => {
+                    console.warn('Failed to load image for ColorThief, using fallback');
+                    this.fallbackColorExtraction(imageData, window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                };
                     
                     tempImg.src = imageData.src;
-                } else {
-                    this.fallbackColorExtraction(imageData);
-                }
+                            } else {
+                this.fallbackColorExtraction(imageData, this.state.colors?.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+            }
             } catch (colorError) {
                 console.error('Color extraction failed:', colorError);
-                this.fallbackColorExtraction(imageData);
+                this.fallbackColorExtraction(imageData, window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
             }
 
             // Update UI
@@ -349,27 +828,154 @@ class PolyHueApp {
     }
 
     /**
+     * Handle drag over event for file upload
+     */
+    handleDragOver(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Add visual feedback
+        if (this.elements.uploadArea) {
+            this.elements.uploadArea.classList.add('drag-over');
+        }
+    }
+
+    /**
+     * Handle drag leave event for file upload
+     */
+    handleDragLeave(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Remove visual feedback only if leaving the upload area itself
+        if (event.target === this.elements.uploadArea) {
+            this.elements.uploadArea.classList.remove('drag-over');
+        }
+    }
+
+    /**
+     * Handle drop event for file upload
+     */
+    handleDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Remove visual feedback
+        if (this.elements.uploadArea) {
+            this.elements.uploadArea.classList.remove('drag-over');
+        }
+        
+        // Get the dropped files
+        const files = event.dataTransfer?.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            
+            // Create a fake event object to pass to handleImageUpload
+            const fakeEvent = {
+                target: {
+                    files: [file]
+                }
+            };
+            
+            // Process the dropped file using the existing image upload handler
+            this.handleImageUpload(fakeEvent);
+        }
+    }
+
+    /**
+     * Re-analyze the current image to extract colors again
+     */
+    async reanalyzeImage() {
+        if (!this.state.image) {
+            this.showError('No image loaded to reanalyze');
+            return;
+        }
+
+        try {
+            this.showLoading('Reanalyzing image colors...');
+            
+            const imageData = this.state.image;
+            
+            // Extract colors using ColorThief if available
+            if (window.ColorThief && imageData.canvas && imageData.canvas.width > 0 && imageData.canvas.height > 0) {
+                // Ensure the canvas is ready by creating a small test image
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                
+                tempImg.onload = () => {
+                    try {
+                        const colorThief = new window.ColorThief();
+                        const colorCount = this.state.colors?.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT;
+                        const paletteRgb = colorThief.getPalette(tempImg, colorCount);
+                        
+                        // Convert to our color format
+                        this.state.colors = paletteRgb.map((rgb, index) => ({
+                            id: index,
+                            hex: window.ImageProcessor.rgbToHex(rgb[0], rgb[1], rgb[2]),
+                            rgb: { r: rgb[0], g: rgb[1], b: rgb[2] },
+                            percent: Math.round(100 / paletteRgb.length), // Evenly distributed initially
+                            custom: false,
+                            height: window.APP_CONSTANTS.DEFAULT_MODEL_HEIGHT / paletteRgb.length,
+                            order: index
+                        }));
+                        
+                        console.log(`Re-extracted ${this.state.colors.length} colors from image`);
+                        this.state.isDirty = true;
+                        this.state.lastModified = new Date();
+                        
+                        // Update UI
+                        this.updateUI();
+                        this.hideLoading();
+                        
+                    } catch (colorError) {
+                        console.error('ColorThief reanalysis failed:', colorError);
+                        this.fallbackColorExtraction(imageData, this.state.colors?.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                    }
+                };
+                
+                tempImg.onerror = () => {
+                    console.warn('Failed to load image for ColorThief reanalysis, using fallback');
+                    this.fallbackColorExtraction(imageData, this.state.colors?.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                };
+                
+                tempImg.src = imageData.src;
+                
+            } else {
+                this.fallbackColorExtraction(imageData, window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+            }
+            
+        } catch (error) {
+            this.hideLoading();
+            this.showError(`Failed to reanalyze image: ${error.message}`);
+        }
+    }
+
+    /**
      * Fallback color extraction method
      */
-    fallbackColorExtraction(imageData) {
+    fallbackColorExtraction(imageData, colorCount = window.APP_CONSTANTS.DEFAULT_COLOR_COUNT) {
         try {
             console.warn('Using fallback color extraction');
             
             if (imageData.canvas && imageData.canvas.width > 0 && imageData.canvas.height > 0) {
                 const canvasContext = imageData.canvas.getContext('2d');
                 const pixelData = canvasContext.getImageData(0, 0, imageData.width, imageData.height);
-                this.state.colors = window.ImageProcessor.extractColors(pixelData, window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                this.state.colors = window.ImageProcessor.extractColors(pixelData, colorCount);
             } else {
                 // Generate default colors as last resort
-                this.state.colors = this.generateDefaultColors(window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+                this.state.colors = this.generateDefaultColors(colorCount);
             }
             
             console.log(`Fallback: Generated ${this.state.colors.length} colors`);
+            
+            // Update UI and color preview
+            this.updateUI();
+            
             this.hideLoading();
             
         } catch (fallbackError) {
             console.error('Fallback color extraction failed:', fallbackError);
-            this.state.colors = this.generateDefaultColors(window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
+            this.state.colors = this.generateDefaultColors(colorCount);
             this.hideLoading();
         }
     }
@@ -462,898 +1068,6 @@ class PolyHueApp {
     /**
      * Handle step changes
      */
-    changeStep(newStep) {
-        if (newStep === this.state.currentStep) return;
-
-        // Validate step change
-        if (newStep === 2 && !this.state.image) {
-            this.showError('Please upload an image first.');
-            return;
-        }
-
-        if (newStep === 3 && (!this.state.colors || this.state.colors.length === 0)) {
-            this.showError('Please configure colors first.');
-            return;
-        }
-
-        this.state.currentStep = newStep;
-        this.updateUI();
-    }
-
-    /**
-     * Update the UI based on current state
-     */
-    updateUI() {
-        // Update progress steps
-        this.elements.progressSteps.forEach((step, index) => {
-            const stepNumber = index + 1;
-            step.classList.toggle('active', stepNumber === this.state.currentStep);
-            step.classList.toggle('completed', stepNumber < this.state.currentStep);
-        });
-
-        // Update step content visibility
-        this.elements.stepContents.forEach((content, index) => {
-            const stepNumber = index + 1;
-            content.classList.toggle('active', stepNumber === this.state.currentStep);
-        });
-
-        // Update color count display
-        if (this.elements.colorCountValue) {
-            this.elements.colorCountValue.textContent = this.state.colors.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT;
-        }
-
-        // Update color count slider
-        if (this.elements.colorCount) {
-            this.elements.colorCount.value = this.state.colors.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT;
-        }
-
-        // Update color editor if on step 2
-        if (this.state.currentStep === 2) {
-            this.updateColorEditor();
-            this.updateColorPreview();
-        }
-
-        // Initialize 3D model if on step 3
-        if (this.state.currentStep === 3) {
-            this.initialize3D();
-        }
-    }
-
-    /**
-     * Update the color editor display
-     */
-    updateColorEditor() {
-        if (!this.elements.colorList || !this.state.colors) return;
-
-        // Clear existing color items
-        this.elements.colorList.innerHTML = '';
-
-        // Create color items
-        this.state.colors.forEach((color, index) => {
-            const colorItem = document.createElement('div');
-            colorItem.className = 'color-item';
-            colorItem.dataset.colorId = color.id;
-            colorItem.dataset.colorIndex = index;
-            colorItem.innerHTML = `
-                <div class="color-swatch" style="background-color: ${color.hex}"></div>
-                <div class="color-info">
-                    <label>Color ${index + 1}</label>
-                    <input type="color" value="${color.hex}" data-color-id="${color.id}" class="color-picker">
-                    <div class="color-details">
-                        <span class="color-hex">${color.hex}</span>
-                    </div>
-                    <div class="color-percentage">
-                        <label class="percentage-label">Coverage</label>
-                        <div class="percentage-control">
-                            <input type="range" class="color-percent-slider" 
-                                   min="5" max="60" value="${color.percent}" 
-                                   data-color-id="${color.id}" 
-                                   title="Adjust color coverage percentage">
-                            <span class="color-percent-value">${color.percent}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="color-controls">
-                    <button type="button" class="btn btn-small color-delete" data-color-id="${color.id}">×</button>
-                    <div class="drag-handle">⋮⋮</div>
-                </div>
-            `;
-            
-            // Add drag and drop event listeners only to the drag handle
-            const dragHandle = colorItem.querySelector('.drag-handle');
-            if (dragHandle) {
-                dragHandle.addEventListener('mousedown', (e) => {
-                    colorItem.draggable = true;
-                });
-                
-                colorItem.addEventListener('dragstart', this.handleColorDragStart.bind(this));
-                colorItem.addEventListener('dragover', this.handleColorDragOver.bind(this));
-                colorItem.addEventListener('drop', this.handleColorDrop.bind(this));
-                colorItem.addEventListener('dragend', this.handleColorDragEnd.bind(this));
-            }
-            
-            // Disable dragging by default, only enable when drag handle is used
-            colorItem.draggable = false;
-            
-            this.elements.colorList.appendChild(colorItem);
-        });
-
-        // Add event listeners to color pickers
-        this.elements.colorList.querySelectorAll('.color-picker').forEach(picker => {
-            picker.addEventListener('change', this.handleColorPickerChange.bind(this));
-            
-            // Prevent drag and drop conflicts with color picker
-            picker.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-        });
-
-        // Add event listeners to percentage sliders
-        this.elements.colorList.querySelectorAll('.color-percent-slider').forEach(slider => {
-            slider.addEventListener('input', this.handlePercentageChange.bind(this));
-            
-            // Prevent drag and drop conflicts with sliders
-            slider.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-            
-            slider.addEventListener('dragstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-            
-            slider.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-            
-            slider.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-        });
-
-        // Add event listeners to delete buttons
-        this.elements.colorList.querySelectorAll('.color-delete').forEach(button => {
-            button.addEventListener('click', this.handleColorDelete.bind(this));
-            
-            // Prevent drag and drop conflicts with delete button
-            button.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-        });
-
-        // Prevent drag conflicts for percentage control areas
-        this.elements.colorList.querySelectorAll('.color-percentage').forEach(percentageArea => {
-            percentageArea.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-        });
-
-        // Update color preview canvas
-        this.updateColorPreview();
-    }
-
-    /**
-     * Handle color picker changes
-     */
-    handleColorPickerChange(event) {
-        const colorId = parseInt(event.target.dataset.colorId);
-        const newHex = event.target.value;
-        
-        const color = this.state.colors.find(c => c.id === colorId);
-        if (color) {
-            color.hex = newHex;
-            color.custom = true;
-            const rgb = window.ImageProcessor.hexToRgb(newHex);
-            if (rgb) {
-                color.rgb = rgb;
-            }
-            
-            // Update the display
-            this.updateColorEditor();
-        }
-    }
-
-    /**
-     * Handle percentage slider changes
-     */
-    handlePercentageChange(event) {
-        const colorId = parseInt(event.target.dataset.colorId);
-        const newPercent = parseInt(event.target.value);
-        
-        const color = this.state.colors.find(c => c.id === colorId);
-        if (!color) return;
-
-        const oldPercent = color.percent;
-        const percentDiff = newPercent - oldPercent;
-
-        // Update the changed color
-        color.percent = newPercent;
-        color.custom = true; // Mark as customized
-
-        // Redistribute the difference among other colors
-        this.redistributePercentages(colorId, percentDiff);
-
-        // Update the display
-        this.updatePercentageDisplays();
-        this.updateColorPreview();
-    }
-
-    /**
-     * Redistribute percentage changes among other colors
-     */
-    redistributePercentages(changedColorId, percentDiff) {
-        const otherColors = this.state.colors.filter(c => c.id !== changedColorId);
-        if (otherColors.length === 0) return;
-
-        // Calculate total percentage of other colors
-        let totalOtherPercent = otherColors.reduce((sum, color) => sum + color.percent, 0);
-        
-        // Target total for other colors (100 - changed color percentage)
-        const changedColor = this.state.colors.find(c => c.id === changedColorId);
-        const targetOtherTotal = 100 - changedColor.percent;
-
-        // If we need to adjust other colors
-        if (totalOtherPercent !== targetOtherTotal && targetOtherTotal > 0) {
-            // Calculate scaling factor
-            const scaleFactor = targetOtherTotal / totalOtherPercent;
-            
-            // Apply scaling, ensuring minimum of 5% per color
-            let adjustedTotal = 0;
-            otherColors.forEach(color => {
-                const newPercent = Math.max(5, Math.round(color.percent * scaleFactor));
-                color.percent = newPercent;
-                adjustedTotal += newPercent;
-            });
-
-            // Handle rounding errors by adjusting the largest non-changed color
-            const totalAll = adjustedTotal + changedColor.percent;
-            if (totalAll !== 100) {
-                const largestOtherColor = otherColors.reduce((largest, color) => 
-                    color.percent > largest.percent ? color : largest
-                );
-                largestOtherColor.percent += (100 - totalAll);
-                largestOtherColor.percent = Math.max(5, largestOtherColor.percent);
-            }
-        }
-    }
-
-    /**
-     * Update percentage displays in the UI
-     */
-    updatePercentageDisplays() {
-        this.state.colors.forEach(color => {
-            const colorItem = this.elements.colorList.querySelector(`[data-color-id="${color.id}"]`);
-            if (colorItem) {
-                const slider = colorItem.querySelector('.color-percent-slider');
-                const display = colorItem.querySelector('.color-percent-value');
-                
-                if (slider) {
-                    slider.value = color.percent;
-                }
-                if (display) {
-                    display.textContent = `${color.percent}%`;
-                }
-            }
-        });
-    }
-
-    /**
-     * Handle color deletion
-     */
-    handleColorDelete(event) {
-        const colorId = parseInt(event.target.dataset.colorId);
-        
-        // Don't allow deleting the last color
-        if (this.state.colors.length <= 1) {
-            this.showError('You must have at least one color.');
-            return;
-        }
-        
-        // Remove the color
-        this.state.colors = this.state.colors.filter(c => c.id !== colorId);
-        
-        // Update order indices
-        this.state.colors.forEach((color, index) => {
-            color.order = index;
-        });
-        
-        // Redistribute percentages
-        this.recalculatePercentages();
-        
-        // Update the color count controls to reflect the new count
-        if (this.elements.colorCount) {
-            this.elements.colorCount.value = this.state.colors.length;
-        }
-        if (this.elements.colorCountValue) {
-            this.elements.colorCountValue.textContent = this.state.colors.length;
-        }
-
-        // Update the display
-        this.updateColorEditor();
-        this.updateColorPreview();
-        this.updateUI();
-    }
-
-    /**
-     * Handle color item drag start
-     */
-    handleColorDragStart(event) {
-        const colorItem = event.currentTarget;
-        const colorId = parseInt(colorItem.dataset.colorId);
-        
-        colorItem.classList.add('dragging');
-        event.dataTransfer.setData('text/plain', colorId.toString());
-        event.dataTransfer.effectAllowed = 'move';
-    }
-
-    /**
-     * Handle color item drag over
-     */
-    handleColorDragOver(event) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        
-        const colorItem = event.currentTarget;
-        const draggingItem = this.elements.colorList.querySelector('.dragging');
-        
-        if (colorItem !== draggingItem) {
-            const rect = colorItem.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            
-            if (event.clientY < midpoint) {
-                colorItem.style.borderTop = '2px solid var(--color-primary)';
-                colorItem.style.borderBottom = '';
-            } else {
-                colorItem.style.borderBottom = '2px solid var(--color-primary)';
-                colorItem.style.borderTop = '';
-            }
-        }
-    }
-
-    /**
-     * Handle color item drop
-     */
-    handleColorDrop(event) {
-        event.preventDefault();
-        
-        const draggedColorId = parseInt(event.dataTransfer.getData('text/plain'));
-        const targetItem = event.currentTarget;
-        const targetColorId = parseInt(targetItem.dataset.colorId);
-        
-        if (draggedColorId !== targetColorId) {
-            this.reorderColors(draggedColorId, targetColorId, event);
-        }
-        
-        // Clear visual indicators
-        this.clearDragIndicators();
-    }
-
-    /**
-     * Handle color item drag end
-     */
-    handleColorDragEnd(event) {
-        const colorItem = event.currentTarget;
-        colorItem.classList.remove('dragging');
-        colorItem.draggable = false; // Disable dragging after drag operation
-        this.clearDragIndicators();
-    }
-
-    /**
-     * Clear drag visual indicators
-     */
-    clearDragIndicators() {
-        this.elements.colorList.querySelectorAll('.color-item').forEach(item => {
-            item.style.borderTop = '';
-            item.style.borderBottom = '';
-            item.classList.remove('dragging');
-        });
-    }
-
-    /**
-     * Reorder colors based on drag and drop
-     */
-    reorderColors(draggedColorId, targetColorId, event) {
-        const draggedIndex = this.state.colors.findIndex(c => c.id === draggedColorId);
-        const targetIndex = this.state.colors.findIndex(c => c.id === targetColorId);
-        
-        if (draggedIndex === -1 || targetIndex === -1) return;
-        
-        // Remove dragged color from array
-        const [draggedColor] = this.state.colors.splice(draggedIndex, 1);
-        
-        // Determine insertion point based on drop position
-        const targetItem = event.currentTarget;
-        const rect = targetItem.getBoundingClientRect();
-        const midpoint = rect.top + rect.height / 2;
-        const dropAbove = event.clientY < midpoint;
-        
-        let insertIndex = targetIndex;
-        if (draggedIndex < targetIndex && !dropAbove) {
-            // Dragging down and dropping below target
-            insertIndex = targetIndex;
-        } else if (draggedIndex < targetIndex && dropAbove) {
-            // Dragging down and dropping above target
-            insertIndex = targetIndex;
-        } else if (draggedIndex > targetIndex && dropAbove) {
-            // Dragging up and dropping above target
-            insertIndex = targetIndex;
-        } else {
-            // Dragging up and dropping below target
-            insertIndex = targetIndex + 1;
-        }
-        
-        // Insert at new position
-        this.state.colors.splice(insertIndex, 0, draggedColor);
-        
-        // Update order property
-        this.state.colors.forEach((color, index) => {
-            color.order = index;
-        });
-        
-        // Update display
-        this.updateColorEditor();
-        this.updateColorPreview();
-    }
-
-    /**
-     * Update color preview canvas
-     */
-    updateColorPreview() {
-        if (!this.elements.colorPreviewCanvas || !this.state.image) return;
-
-        const canvas = this.elements.colorPreviewCanvas;
-        const ctx = canvas.getContext('2d');
-        
-        // Set canvas size
-        const maxSize = 300;
-        const aspectRatio = this.state.image.width / this.state.image.height;
-        
-        if (aspectRatio > 1) {
-            canvas.width = maxSize;
-            canvas.height = maxSize / aspectRatio;
-        } else {
-            canvas.height = maxSize;
-            canvas.width = maxSize * aspectRatio;
-        }
-        
-        // Draw quantized color preview
-        if (this.state.colors && this.state.colors.length > 0) {
-            this.drawQuantizedImage(canvas, ctx);
-        } else {
-            // Draw original image if no colors yet
-            const img = new Image();
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            };
-            img.src = this.state.image.src;
-        }
-    }
-
-    /**
-     * Draw quantized image with current color palette
-     */
-    drawQuantizedImage(canvas, ctx) {
-        const img = new Image();
-        img.onload = () => {
-            // Draw original image first
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            // Get image data
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            // Quantize each pixel to the nearest color in our palette
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const a = data[i + 3];
-                
-                // Skip transparent pixels
-                if (a < 128) continue;
-                
-                // Find closest color in palette
-                const closestColor = this.findClosestColor(r, g, b);
-                if (closestColor) {
-                    data[i] = closestColor.rgb.r;
-                    data[i + 1] = closestColor.rgb.g;
-                    data[i + 2] = closestColor.rgb.b;
-                }
-            }
-            
-            // Draw the quantized image
-            ctx.putImageData(imageData, 0, 0);
-        };
-        img.src = this.state.image.src;
-    }
-
-    /**
-     * Find the closest color in the current palette
-     */
-    findClosestColor(r, g, b) {
-        if (!this.state.colors || this.state.colors.length === 0) return null;
-        
-        let minDistance = Infinity;
-        let closestColor = null;
-        
-        this.state.colors.forEach(color => {
-            const dr = r - color.rgb.r;
-            const dg = g - color.rgb.g;
-            const db = b - color.rgb.b;
-            const distance = dr * dr + dg * dg + db * db; // Squared Euclidean distance
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestColor = color;
-            }
-        });
-        
-        return closestColor;
-    }
-
-    /**
-     * Drag and drop handlers
-     */
-    handleDragOver(event) {
-        event.preventDefault();
-        this.elements.uploadArea?.classList.add('drag-over');
-    }
-
-    handleDragLeave(event) {
-        event.preventDefault();
-        this.elements.uploadArea?.classList.remove('drag-over');
-    }
-
-    handleDrop(event) {
-        event.preventDefault();
-        this.elements.uploadArea?.classList.remove('drag-over');
-        
-        const files = event.dataTransfer.files;
-        if (files.length > 0) {
-            this.elements.imageInput.files = files;
-            this.handleImageUpload({ target: { files } });
-        }
-    }
-
-    /**
-     * Color count adjustment
-     */
-    adjustColorCount(delta) {
-        const currentCount = parseInt(this.elements.colorCount?.value || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
-        const newCount = Math.max(
-            window.APP_CONSTANTS.MIN_COLOR_COUNT, 
-            Math.min(window.APP_CONSTANTS.MAX_COLOR_COUNT, currentCount + delta)
-        );
-        
-        if (this.elements.colorCount) {
-            this.elements.colorCount.value = newCount;
-            this.handleColorCountChange();
-        }
-    }
-
-    /**
-     * Handle color count changes
-     */
-    async handleColorCountChange() {
-        const newCount = parseInt(this.elements.colorCount?.value || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT);
-        const currentCount = this.state.colors.length;
-        
-        if (this.elements.colorCountValue) {
-            this.elements.colorCountValue.textContent = newCount;
-        }
-        
-        // If no change in count, do nothing
-        if (newCount === currentCount) {
-            return;
-        }
-        
-        try {
-            this.showLoading('Updating colors...');
-            
-            if (newCount > currentCount) {
-                // Adding colors - preserve existing ones and add new ones
-                await this.addColors(newCount - currentCount);
-            } else {
-                // Removing colors - remove from the end, preserving custom colors
-                this.removeColors(currentCount - newCount);
-            }
-            
-            this.updateColorEditor();
-            this.hideLoading();
-            
-        } catch (error) {
-            this.hideLoading();
-            console.error('Failed to update colors:', error);
-            this.showError('Failed to update colors. Please try again.');
-        }
-    }
-
-    /**
-     * Add new colors while preserving existing ones
-     */
-    async addColors(countToAdd) {
-        if (!this.state.image || !this.state.image.src) {
-            // No image, just add default colors
-            for (let i = 0; i < countToAdd; i++) {
-                this.addDefaultColor();
-            }
-            return;
-        }
-
-        // Get new colors from image quantization
-        const totalNeeded = this.state.colors.length + countToAdd;
-        let newColors = [];
-
-        try {
-            if (window.ColorThief) {
-                const tempImg = new Image();
-                tempImg.crossOrigin = 'anonymous';
-                
-                const newColorsPromise = new Promise((resolve, reject) => {
-                    tempImg.onload = () => {
-                        try {
-                            const colorThief = new window.ColorThief();
-                            // Get more colors than we need to have options
-                            const paletteRgb = colorThief.getPalette(tempImg, Math.min(totalNeeded + 5, 16));
-                            
-                            // Find colors that are different from existing ones
-                            const existingHexColors = this.state.colors.map(c => c.hex.toLowerCase());
-                            const candidateColors = paletteRgb
-                                .map((rgb, index) => ({
-                                    hex: window.ImageProcessor.rgbToHex(rgb[0], rgb[1], rgb[2]),
-                                    rgb: { r: rgb[0], g: rgb[1], b: rgb[2] }
-                                }))
-                                .filter(color => !existingHexColors.includes(color.hex.toLowerCase()));
-
-                            resolve(candidateColors.slice(0, countToAdd));
-                        } catch (error) {
-                            reject(error);
-                        }
-                    };
-                    
-                    tempImg.onerror = () => reject(new Error('Failed to load image'));
-                    tempImg.src = this.state.image.src;
-                });
-                
-                newColors = await newColorsPromise;
-            }
-        } catch (error) {
-            console.warn('ColorThief failed, using fallback color generation:', error);
-        }
-
-        // Fill remaining slots with generated colors if needed
-        while (newColors.length < countToAdd) {
-            newColors.push(this.generateUniqueColor());
-        }
-
-        // Add the new colors to state
-        const maxId = Math.max(0, ...this.state.colors.map(c => c.id));
-        newColors.slice(0, countToAdd).forEach((color, index) => {
-            const newColor = {
-                id: maxId + index + 1,
-                hex: color.hex,
-                rgb: color.rgb,
-                percent: 0, // Will be recalculated
-                custom: false,
-                height: window.APP_CONSTANTS.DEFAULT_MODEL_HEIGHT / (this.state.colors.length + countToAdd),
-                order: this.state.colors.length + index
-            };
-            this.state.colors.push(newColor);
-        });
-
-        // Recalculate percentages
-        this.recalculatePercentages();
-    }
-
-    /**
-     * Remove colors from the end, but preserve custom colors
-     */
-    removeColors(countToRemove) {
-        if (countToRemove >= this.state.colors.length) {
-            // Don't remove all colors
-            countToRemove = this.state.colors.length - 1;
-        }
-
-        // Sort by priority: non-custom colors first, then by order
-        const sortedColors = [...this.state.colors].sort((a, b) => {
-            if (a.custom && !b.custom) return 1;  // Custom colors have higher priority
-            if (!a.custom && b.custom) return -1;
-            return b.order - a.order; // Remove from the end
-        });
-
-        // Remove the lowest priority colors
-        const colorsToRemove = sortedColors.slice(-countToRemove);
-        const idsToRemove = new Set(colorsToRemove.map(c => c.id));
-        
-        this.state.colors = this.state.colors.filter(color => !idsToRemove.has(color.id));
-
-        // Update order indices
-        this.state.colors.forEach((color, index) => {
-            color.order = index;
-        });
-
-        // Recalculate percentages
-        this.recalculatePercentages();
-    }
-
-    /**
-     * Generate a unique color that doesn't exist in current palette
-     */
-    generateUniqueColor() {
-        const existingHexColors = this.state.colors.map(c => c.hex.toLowerCase());
-        let attempts = 0;
-        
-        while (attempts < 50) { // Max 50 attempts
-            const hue = Math.random() * 360;
-            const saturation = 0.5 + Math.random() * 0.4; // 50-90%
-            const lightness = 0.3 + Math.random() * 0.4;  // 30-70%
-            
-            const rgb = this.hslToRgb(hue / 360, saturation, lightness);
-            const hex = window.ImageProcessor.rgbToHex(rgb.r, rgb.g, rgb.b);
-            
-            if (!existingHexColors.includes(hex.toLowerCase())) {
-                return { hex, rgb };
-            }
-            attempts++;
-        }
-        
-        // Fallback if we can't find a unique color
-        return {
-            hex: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
-            rgb: { r: 128, g: 128, b: 128 }
-        };
-    }
-
-    /**
-     * Add a default color
-     */
-    addDefaultColor() {
-        const maxId = Math.max(0, ...this.state.colors.map(c => c.id));
-        const colorData = this.generateUniqueColor();
-        
-        const newColor = {
-            id: maxId + 1,
-            hex: colorData.hex,
-            rgb: colorData.rgb,
-            percent: 0, // Will be recalculated
-            custom: false,
-            height: window.APP_CONSTANTS.DEFAULT_MODEL_HEIGHT / (this.state.colors.length + 1),
-            order: this.state.colors.length
-        };
-        
-        this.state.colors.push(newColor);
-        this.recalculatePercentages();
-    }
-
-    /**
-     * Recalculate color percentages
-     */
-    recalculatePercentages() {
-        const count = this.state.colors.length;
-        if (count === 0) return;
-        
-        // Distribute percentages evenly, but preserve any custom percentages if possible
-        const evenPercent = Math.floor(100 / count);
-        const remainder = 100 - (evenPercent * count);
-        
-                 this.state.colors.forEach((color, index) => {
-             color.percent = evenPercent + (index < remainder ? 1 : 0);
-         });
-     }
-
-     /**
-      * Re-analyze the image to extract fresh colors
-      */
-     async reanalyzeImage() {
-         if (!this.state.image || !this.state.image.src) {
-             this.showError('No image available to analyze. Please upload an image first.');
-             return;
-         }
-
-         // Get current color count to maintain the same number
-         const currentColorCount = this.state.colors.length;
-
-         // Confirm with user if they have custom colors
-         const hasCustomColors = this.state.colors.some(color => color.custom);
-         if (hasCustomColors) {
-             const confirmed = confirm(
-                 'This will replace all your current colors with fresh colors from the image. ' +
-                 'Your custom color changes will be lost. Are you sure you want to continue?'
-             );
-             if (!confirmed) {
-                 return;
-             }
-         }
-
-         try {
-             this.showLoading('Re-analyzing image colors...');
-
-             // Extract colors using ColorThief if available
-             if (window.ColorThief) {
-                 const tempImg = new Image();
-                 tempImg.crossOrigin = 'anonymous';
-                 
-                 const extractColorsPromise = new Promise((resolve, reject) => {
-                     tempImg.onload = () => {
-                         try {
-                             const colorThief = new window.ColorThief();
-                             const paletteRgb = colorThief.getPalette(tempImg, currentColorCount);
-                             
-                             // Convert to our color format
-                             const newColors = paletteRgb.map((rgb, index) => ({
-                                 id: index,
-                                 hex: window.ImageProcessor.rgbToHex(rgb[0], rgb[1], rgb[2]),
-                                 rgb: { r: rgb[0], g: rgb[1], b: rgb[2] },
-                                 percent: Math.round(100 / paletteRgb.length),
-                                 custom: false,
-                                 height: window.APP_CONSTANTS.DEFAULT_MODEL_HEIGHT / paletteRgb.length,
-                                 order: index
-                             }));
-                             
-                             resolve(newColors);
-                         } catch (error) {
-                             reject(error);
-                         }
-                     };
-                     
-                     tempImg.onerror = () => reject(new Error('Failed to load image for analysis'));
-                     tempImg.src = this.state.image.src;
-                 });
-                 
-                 this.state.colors = await extractColorsPromise;
-                 
-             } else {
-                 // Fallback to simple extraction method
-                 if (this.state.image.canvas && this.state.image.canvas.width > 0 && this.state.image.canvas.height > 0) {
-                     const canvasContext = this.state.image.canvas.getContext('2d');
-                     const pixelData = canvasContext.getImageData(0, 0, this.state.image.width, this.state.image.height);
-                     this.state.colors = window.ImageProcessor.extractColors(pixelData, currentColorCount);
-                 } else {
-                     throw new Error('No image data available for analysis');
-                 }
-             }
-
-             // Ensure proper percentage distribution
-             this.recalculatePercentages();
-
-             // Update the color count controls to reflect the extracted colors
-             if (this.elements.colorCount) {
-                 this.elements.colorCount.value = this.state.colors.length;
-             }
-             if (this.elements.colorCountValue) {
-                 this.elements.colorCountValue.textContent = this.state.colors.length;
-             }
-
-             // Update the display
-             this.updateColorEditor();
-             this.updateColorPreview();
-             
-             this.hideLoading();
-             
-             console.log(`Re-analyzed image and extracted ${this.state.colors.length} fresh colors`);
-             
-         } catch (error) {
-             this.hideLoading();
-             console.error('Failed to re-analyze image:', error);
-             this.showError(`Failed to re-analyze image: ${error.message}`);
-         }
-     }
-
-
-
-    /**
-     * Handle color changes (placeholder)
-     */
-    handleColorChange(colorData) {
-        // TODO: Implement color change handling
-        console.log('Color changed:', colorData);
-    }
-
-    /**
-     * Handle step changes (placeholder)
-     */
     handleStepChange(step) {
         this.changeStep(step);
     }
@@ -1443,6 +1157,650 @@ class PolyHueApp {
         }
 
         this.updateUI();
+    }
+
+    /**
+     * Handle individual color changes
+     */
+    handleColorChange(colorId, newValue, property = 'hex') {
+        try {
+            const colorIndex = this.state.colors.findIndex(color => color.id === colorId);
+            if (colorIndex === -1) {
+                console.warn(`Color with id ${colorId} not found`);
+                return;
+            }
+
+            // Update the specific property
+            if (property === 'hex') {
+                this.state.colors[colorIndex].hex = newValue;
+                // Update RGB values based on new hex
+                if (window.ImageProcessor && window.ImageProcessor.hexToRgb) {
+                    this.state.colors[colorIndex].rgb = window.ImageProcessor.hexToRgb(newValue);
+                }
+            } else if (property === 'height') {
+                this.state.colors[colorIndex].height = parseFloat(newValue);
+            } else if (property === 'percent') {
+                this.state.colors[colorIndex].percent = parseFloat(newValue);
+            }
+
+            // Mark as custom modification
+            this.state.colors[colorIndex].custom = true;
+            this.state.isDirty = true;
+            this.state.lastModified = new Date();
+
+            // Update the UI
+            this.updateUI();
+            
+            // Update color preview canvas specifically
+            this.updateColorPreviewCanvas();
+            
+            console.log(`Color ${colorId} ${property} updated to:`, newValue);
+        } catch (error) {
+            console.error('Error updating color:', error);
+            this.showError(`Failed to update color: ${error.message}`);
+        }
+    }
+
+    /**
+     * Handle color count changes
+     */
+    handleColorCountChange(event) {
+        try {
+            const newCount = parseInt(event.target.value);
+            if (isNaN(newCount) || newCount < 1 || newCount > 10) {
+                console.warn('Invalid color count:', newCount);
+                return;
+            }
+
+            // Update the color count display
+            if (this.elements.colorCountValue) {
+                this.elements.colorCountValue.textContent = newCount;
+            }
+
+                    // Re-extract colors with new count if image is available
+        if (this.state.image) {
+            this.extractColorsFromImage(newCount);
+        } else {
+            // Generate default colors if no image
+            this.state.colors = this.generateDefaultColors(newCount);
+            this.updateUI();
+        }
+
+            this.state.isDirty = true;
+            this.state.lastModified = new Date();
+            
+            console.log(`Color count changed to: ${newCount}`);
+        } catch (error) {
+            console.error('Error changing color count:', error);
+            this.showError(`Failed to change color count: ${error.message}`);
+        }
+    }
+
+    /**
+     * Adjust color count by a delta amount (+1 or -1)
+     */
+    adjustColorCount(delta) {
+        try {
+            const currentCount = this.state.colors?.length || window.APP_CONSTANTS.DEFAULT_COLOR_COUNT;
+            const newCount = Math.max(1, Math.min(10, currentCount + delta));
+            
+            if (newCount === currentCount) {
+                return; // No change needed
+            }
+            
+            // Update the slider value
+            if (this.elements.colorCount) {
+                this.elements.colorCount.value = newCount;
+            }
+            
+            // Update the display value
+            if (this.elements.colorCountValue) {
+                this.elements.colorCountValue.textContent = newCount;
+            }
+            
+            // Re-extract colors with new count if image is available
+            if (this.state.image) {
+                this.extractColorsFromImage(newCount);
+            } else {
+                // Generate default colors if no image
+                this.state.colors = this.generateDefaultColors(newCount);
+                this.updateUI();
+            }
+            
+            this.state.isDirty = true;
+            this.state.lastModified = new Date();
+            
+            console.log(`Color count adjusted to: ${newCount}`);
+        } catch (error) {
+            console.error('Error adjusting color count:', error);
+            this.showError(`Failed to adjust color count: ${error.message}`);
+        }
+    }
+
+    /**
+     * Update the UI based on current state
+     */
+    updateUI() {
+        try {
+            // Update step navigation
+            this.updateStepNavigation();
+            
+            // Update step visibility
+            this.updateStepVisibility();
+            
+            // Update image preview if available
+            if (this.state.image) {
+                this.updateImagePreview();
+            }
+            
+            // Update color list if colors are available
+            if (this.state.colors && this.state.colors.length > 0) {
+                this.updateColorList();
+            }
+            
+            // Update color count controls
+            this.updateColorCountControls();
+            
+            // Update 3D model if available
+            if (this.model3D) {
+                this.update3DModel();
+            }
+            
+            console.log('UI updated successfully');
+        } catch (error) {
+            console.error('Error updating UI:', error);
+        }
+    }
+
+    /**
+     * Update step navigation active state
+     */
+    updateStepNavigation() {
+        if (!this.elements.progressSteps) return;
+        
+        this.elements.progressSteps.forEach((step, index) => {
+            const stepNumber = index + 1;
+            if (stepNumber === this.state.currentStep) {
+                step.classList.add('active');
+            } else if (stepNumber < this.state.currentStep) {
+                step.classList.add('completed');
+                step.classList.remove('active');
+            } else {
+                step.classList.remove('active', 'completed');
+            }
+        });
+    }
+
+    /**
+     * Update step content visibility
+     */
+    updateStepVisibility() {
+        if (!this.elements.stepContents) return;
+        
+        this.elements.stepContents.forEach((stepContent, index) => {
+            const stepNumber = index + 1;
+            if (stepNumber === this.state.currentStep) {
+                stepContent.classList.add('active');
+            } else {
+                stepContent.classList.remove('active');
+            }
+        });
+    }
+
+    /**
+     * Update color list in the UI
+     */
+    updateColorList() {
+        if (!this.elements.colorList || !this.state.colors) return;
+        
+        // Clear existing list
+        this.elements.colorList.innerHTML = '';
+        
+        // Create color items
+        this.state.colors.forEach((color, index) => {
+            const colorItem = this.createColorItem(color, index);
+            this.elements.colorList.appendChild(colorItem);
+        });
+        
+        // Update color preview canvas
+        this.updateColorPreviewCanvas();
+    }
+
+    /**
+     * Update the color preview canvas with quantized image
+     */
+    updateColorPreviewCanvas() {
+        if (!this.elements.colorPreviewCanvas || !this.state.image || !this.state.colors) return;
+        
+        try {
+            const canvas = this.elements.colorPreviewCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Get original image dimensions
+            const imageWidth = this.state.image.width;
+            const imageHeight = this.state.image.height;
+            
+            // Calculate aspect ratio and canvas dimensions
+            const maxCanvasSize = 300;
+            const aspectRatio = imageWidth / imageHeight;
+            let canvasWidth, canvasHeight;
+            
+            if (aspectRatio > 1) {
+                canvasWidth = Math.min(maxCanvasSize, imageWidth);
+                canvasHeight = canvasWidth / aspectRatio;
+            } else {
+                canvasHeight = Math.min(maxCanvasSize, imageHeight);
+                canvasWidth = canvasHeight * aspectRatio;
+            }
+            
+            // Set canvas size
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            
+            // Create quantized image
+            this.renderQuantizedImage(ctx, canvasWidth, canvasHeight, imageWidth, imageHeight);
+            
+        } catch (error) {
+            console.error('Error updating color preview canvas:', error);
+        }
+    }
+
+    /**
+     * Render quantized image to canvas context
+     */
+    renderQuantizedImage(ctx, canvasWidth, canvasHeight, originalWidth, originalHeight) {
+        if (!this.state.image.canvas) return;
+        
+        // Get original image data
+        const originalCanvas = this.state.image.canvas;
+        const originalCtx = originalCanvas.getContext('2d');
+        const originalImageData = originalCtx.getImageData(0, 0, originalWidth, originalHeight);
+        const originalData = originalImageData.data;
+        
+        // Create new image data for quantized version
+        const quantizedImageData = ctx.createImageData(canvasWidth, canvasHeight);
+        const quantizedData = quantizedImageData.data;
+        
+        // Scale factors
+        const scaleX = originalWidth / canvasWidth;
+        const scaleY = originalHeight / canvasHeight;
+        
+        // Process each pixel in the canvas
+        for (let y = 0; y < canvasHeight; y++) {
+            for (let x = 0; x < canvasWidth; x++) {
+                // Map to original image coordinates
+                const origX = Math.floor(x * scaleX);
+                const origY = Math.floor(y * scaleY);
+                const origIndex = (origY * originalWidth + origX) * 4;
+                
+                // Get original pixel color
+                const r = originalData[origIndex];
+                const g = originalData[origIndex + 1];
+                const b = originalData[origIndex + 2];
+                const a = originalData[origIndex + 3];
+                
+                // Find closest color in palette
+                const closestColor = this.findClosestColor(r, g, b);
+                
+                // Set quantized pixel
+                const canvasIndex = (y * canvasWidth + x) * 4;
+                if (closestColor && a > 128) {
+                    quantizedData[canvasIndex] = closestColor.rgb.r;
+                    quantizedData[canvasIndex + 1] = closestColor.rgb.g;
+                    quantizedData[canvasIndex + 2] = closestColor.rgb.b;
+                    quantizedData[canvasIndex + 3] = 255;
+                } else {
+                    // Transparent or no color found
+                    quantizedData[canvasIndex] = 255;
+                    quantizedData[canvasIndex + 1] = 255;
+                    quantizedData[canvasIndex + 2] = 255;
+                    quantizedData[canvasIndex + 3] = 0;
+                }
+            }
+        }
+        
+        // Render quantized image to canvas
+        ctx.putImageData(quantizedImageData, 0, 0);
+    }
+
+    /**
+     * Find the closest color in the palette to given RGB values
+     */
+    findClosestColor(r, g, b) {
+        if (!this.state.colors || this.state.colors.length === 0) return null;
+        
+        let closestColor = null;
+        let minDistance = Infinity;
+        
+        for (const color of this.state.colors) {
+            if (!color.rgb) continue;
+            
+            // Calculate Euclidean distance in RGB space
+            const dr = r - color.rgb.r;
+            const dg = g - color.rgb.g;
+            const db = b - color.rgb.b;
+            const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestColor = color;
+            }
+        }
+        
+        return closestColor;
+    }
+
+    /**
+     * Extract colors from the current image with specified count
+     */
+    async extractColorsFromImage(colorCount) {
+        if (!this.state.image) {
+            console.warn('No image available for color extraction');
+            return;
+        }
+
+        try {
+            // Extract colors using ColorThief if available
+            if (window.ColorThief && this.state.image.canvas && this.state.image.canvas.width > 0 && this.state.image.canvas.height > 0) {
+                // Ensure the canvas is ready by creating a small test image
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                
+                tempImg.onload = () => {
+                    try {
+                        const colorThief = new window.ColorThief();
+                        const paletteRgb = colorThief.getPalette(tempImg, colorCount);
+                        
+                        // Convert to our color format
+                        this.state.colors = paletteRgb.map((rgb, index) => ({
+                            id: index,
+                            hex: window.ImageProcessor.rgbToHex(rgb[0], rgb[1], rgb[2]),
+                            rgb: { r: rgb[0], g: rgb[1], b: rgb[2] },
+                            percent: Math.round(100 / paletteRgb.length), // Evenly distributed initially
+                            custom: false,
+                            height: window.APP_CONSTANTS.DEFAULT_MODEL_HEIGHT / paletteRgb.length,
+                            order: index
+                        }));
+                        
+                        console.log(`Extracted ${this.state.colors.length} colors from image`);
+                        
+                        // Update UI and color preview
+                        this.updateUI();
+                        
+                    } catch (colorError) {
+                        console.error('ColorThief extraction failed:', colorError);
+                        this.fallbackColorExtraction(this.state.image, colorCount);
+                    }
+                };
+                
+                tempImg.onerror = () => {
+                    console.warn('Failed to load image for ColorThief, using fallback');
+                    this.fallbackColorExtraction(this.state.image, colorCount);
+                };
+                
+                tempImg.src = this.state.image.src;
+                
+            } else {
+                this.fallbackColorExtraction(this.state.image, colorCount);
+            }
+            
+        } catch (error) {
+            console.error('Color extraction failed:', error);
+            this.fallbackColorExtraction(this.state.image, colorCount);
+        }
+    }
+
+    /**
+     * Create a color item element
+     */
+    createColorItem(color, index) {
+        const item = document.createElement('div');
+        item.className = 'color-item';
+        item.dataset.colorId = color.id;
+        item.dataset.colorOrder = color.order || index;
+        item.draggable = true;
+        
+        item.innerHTML = `
+            <div class="drag-handle">⋮⋮</div>
+            <div class="color-swatch" style="background-color: ${color.hex}"></div>
+            <div class="color-info">
+                <div class="color-controls">
+                    <label class="color-label">
+                        Color ${index + 1}
+                        <input type="color" class="color-picker" value="${color.hex}" data-color-id="${color.id}">
+                    </label>
+                    <div class="color-details">
+                        <span class="color-hex">${color.hex.toUpperCase()}</span>
+                        <span class="color-percent">${color.percent?.toFixed(1) || 0}%</span>
+                    </div>
+                </div>
+                <div class="layer-height">
+                    <label>
+                        Height: <input type="number" class="height-input" value="${color.height?.toFixed(2) || 0}" 
+                               min="0" max="50" step="0.1" data-color-id="${color.id}"> mm
+                    </label>
+                </div>
+            </div>
+            <div class="color-controls">
+                <button type="button" class="color-delete" data-color-id="${color.id}" title="Remove color">×</button>
+            </div>
+        `;
+        
+        // Add event listeners
+        const colorPicker = item.querySelector('.color-picker');
+        const heightInput = item.querySelector('.height-input');
+        const deleteBtn = item.querySelector('.color-delete');
+        
+        if (colorPicker) {
+            colorPicker.addEventListener('change', (e) => {
+                this.handleColorChange(color.id, e.target.value, 'hex');
+            });
+        }
+        
+        if (heightInput) {
+            heightInput.addEventListener('change', (e) => {
+                this.handleColorChange(color.id, e.target.value, 'height');
+            });
+        }
+        
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.deleteColor(color.id);
+            });
+        }
+        
+        // Add drag and drop event listeners
+        this.addDragAndDropListeners(item);
+        
+        return item;
+    }
+
+    /**
+     * Add drag and drop event listeners to a color item
+     */
+    addDragAndDropListeners(item) {
+        // Drag start
+        item.addEventListener('dragstart', (e) => {
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', item.outerHTML);
+            e.dataTransfer.setData('application/json', JSON.stringify({
+                colorId: item.dataset.colorId,
+                colorOrder: parseInt(item.dataset.colorOrder)
+            }));
+            
+            // Add visual feedback
+            setTimeout(() => {
+                item.style.opacity = '0.5';
+            }, 0);
+        });
+
+        // Drag end
+        item.addEventListener('dragend', (e) => {
+            item.classList.remove('dragging');
+            item.style.opacity = '';
+            
+            // Clean up any drop indicators
+            document.querySelectorAll('.color-item.drop-target').forEach(el => {
+                el.classList.remove('drop-target');
+            });
+        });
+
+        // Drag over (for drop targets)
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const draggingItem = document.querySelector('.color-item.dragging');
+            if (draggingItem && draggingItem !== item) {
+                item.classList.add('drop-target');
+            }
+        });
+
+        // Drag leave
+        item.addEventListener('dragleave', (e) => {
+            if (!item.contains(e.relatedTarget)) {
+                item.classList.remove('drop-target');
+            }
+        });
+
+        // Drop
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drop-target');
+            
+            const draggingItem = document.querySelector('.color-item.dragging');
+            if (draggingItem && draggingItem !== item) {
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+                    const targetOrder = parseInt(item.dataset.colorOrder);
+                    const sourceOrder = dragData.colorOrder;
+                    
+                    // Reorder colors
+                    this.reorderColors(dragData.colorId, targetOrder);
+                } catch (error) {
+                    console.error('Error handling drop:', error);
+                }
+            }
+        });
+    }
+
+    /**
+     * Reorder colors by moving a color to a new position
+     */
+    reorderColors(colorId, targetOrder) {
+        try {
+            // Find the color being moved
+            const colorIndex = this.state.colors.findIndex(c => c.id.toString() === colorId.toString());
+            if (colorIndex === -1) return;
+
+            const movingColor = this.state.colors[colorIndex];
+            const originalOrder = movingColor.order || colorIndex;
+
+            // Remove the color from its current position
+            this.state.colors.splice(colorIndex, 1);
+
+            // Find the new insertion index based on target order
+            let insertIndex = targetOrder;
+            if (insertIndex > this.state.colors.length) {
+                insertIndex = this.state.colors.length;
+            }
+
+            // Insert at new position
+            this.state.colors.splice(insertIndex, 0, movingColor);
+
+            // Update all color orders
+            this.state.colors.forEach((color, index) => {
+                color.order = index;
+            });
+
+            // Mark as modified
+            this.state.isDirty = true;
+            this.state.lastModified = new Date();
+
+            // Update UI
+            this.updateUI();
+
+            console.log(`Reordered color ${colorId} from position ${originalOrder} to ${targetOrder}`);
+        } catch (error) {
+            console.error('Error reordering colors:', error);
+            this.showError('Failed to reorder colors');
+        }
+    }
+
+    /**
+     * Delete a color from the palette
+     */
+    deleteColor(colorId) {
+        try {
+            // Don't allow deleting if only one color remains
+            if (this.state.colors.length <= 1) {
+                this.showError('Cannot delete the last color. At least one color is required.');
+                return;
+            }
+
+            // Confirm deletion
+            if (!confirm('Are you sure you want to delete this color?')) {
+                return;
+            }
+
+            // Remove the color
+            const colorIndex = this.state.colors.findIndex(c => c.id.toString() === colorId.toString());
+            if (colorIndex === -1) return;
+
+            this.state.colors.splice(colorIndex, 1);
+
+            // Redistribute percentages among remaining colors
+            const remainingCount = this.state.colors.length;
+            if (remainingCount > 0) {
+                const evenPercent = 100 / remainingCount;
+                this.state.colors.forEach(color => {
+                    color.percent = evenPercent;
+                });
+            }
+
+            // Update orders
+            this.state.colors.forEach((color, index) => {
+                color.order = index;
+            });
+
+            // Mark as modified
+            this.state.isDirty = true;
+            this.state.lastModified = new Date();
+
+            // Update UI
+            this.updateUI();
+
+            console.log(`Deleted color ${colorId}`);
+        } catch (error) {
+            console.error('Error deleting color:', error);
+            this.showError('Failed to delete color');
+        }
+    }
+
+    /**
+     * Update color count controls
+     */
+    updateColorCountControls() {
+        if (this.elements.colorCount && this.state.colors) {
+            this.elements.colorCount.value = this.state.colors.length;
+        }
+        
+        if (this.elements.colorCountValue && this.state.colors) {
+            this.elements.colorCountValue.textContent = this.state.colors.length;
+        }
+    }
+
+    /**
+     * Update 3D model if it exists
+     */
+    update3DModel() {
+        // Placeholder for 3D model updates
+        // This will be implemented when the 3D functionality is needed
+        console.log('3D model update requested');
     }
 
     /**

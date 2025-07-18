@@ -1,6 +1,6 @@
 /* ================================================
-   PolyHue - Responsive Styles
-   Mobile-first responsive design
+   PolyHue - Enhanced Responsive Styles
+   Mobile-first responsive design with creative adaptations
    ================================================ */
 
 /* Tablet Breakpoint */
@@ -10,9 +10,13 @@
         padding: 0 var(--space-3);
     }
 
-    /* Header */
+    /* Enhanced Header */
     .header {
         padding: var(--space-4) 0;
+    }
+    
+    .header::before {
+        height: 2px; /* Thinner rainbow bar on mobile */
     }
 
     .logo {
@@ -28,7 +32,7 @@
         font-size: var(--font-size-base);
     }
 
-    /* Progress Navigation */
+    /* Enhanced Progress Navigation */
     .progress-steps {
         gap: var(--space-4);
     }
@@ -37,13 +41,19 @@
         display: none;
     }
 
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+    }
+
     .step:not(:last-child)::after {
         width: var(--space-4);
     }
 
-    /* Step Layout */
+    /* Step Layout Enhancements */
     .step-header {
         margin-bottom: var(--space-6);
+        padding: var(--space-4);
     }
 
     .step-header h2 {
@@ -61,9 +71,10 @@
 
     .step-actions .btn {
         width: 100%;
+        min-height: 50px; /* Better touch targets */
     }
 
-    /* Upload Area */
+    /* Enhanced Upload Area */
     .upload-area {
         padding: var(--space-8);
     }
@@ -72,22 +83,42 @@
         font-size: 3rem;
     }
 
-    /* Preview Container */
+    /* Enhanced Preview Container */
     .preview-container {
         flex-direction: column;
         text-align: center;
+        gap: var(--space-4);
     }
 
     #preview-image {
-        max-width: 150px;
-        max-height: 150px;
+        max-width: 180px;
+        max-height: 180px;
         align-self: center;
     }
 
-    /* Color Editor Layout */
+    /* Revolutionary Mobile Color Editor Layout */
     .editor-layout {
         grid-template-columns: 1fr;
         gap: var(--space-4);
+    }
+    
+    /* Mobile Sticky Preview - Top Position */
+    .preview-panel {
+        position: sticky;
+        top: var(--space-2);
+        order: -1; /* Show preview first on mobile */
+        max-height: 250px;
+        margin-bottom: var(--space-4);
+    }
+    
+    #color-preview-canvas {
+        height: 200px;
+        max-width: 280px;
+    }
+    
+    /* Enhanced Mobile Color List */
+    .color-list {
+        max-height: 400px; /* Limit height on mobile */
     }
 
     .color-count-control {
@@ -100,7 +131,7 @@
         max-width: none;
     }
 
-    /* Model Editor Layout */
+    /* Enhanced Model Editor Layout */
     .model-layout {
         grid-template-columns: 1fr;
         gap: var(--space-4);
@@ -110,14 +141,22 @@
         height: 300px;
     }
 
-    /* Export Options */
+    /* Enhanced Export Options */
     .export-options {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: var(--space-3);
+    }
+    
+    .export-section {
+        padding: var(--space-6);
+    }
+    
+    .export-section::before {
+        animation-duration: 30s; /* Slower rotation on mobile */
     }
 }
 
-/* Mobile Breakpoint */
+/* Mobile Breakpoint - Enhanced */
 @media (max-width: 480px) {
     /* Typography adjustments */
     h1 { font-size: var(--font-size-3xl); }
@@ -134,7 +173,11 @@
         padding: var(--space-4) 0;
     }
 
-    /* Header */
+    /* Enhanced Header */
+    .header::before {
+        height: 1px; /* Even thinner on small mobile */
+    }
+
     .logo {
         font-size: var(--font-size-xl);
     }
@@ -147,7 +190,7 @@
         font-size: var(--font-size-sm);
     }
 
-    /* Progress Navigation */
+    /* Enhanced Progress Navigation */
     .progress-nav {
         padding: var(--space-3) 0;
     }
@@ -157,8 +200,8 @@
     }
 
     .step-number {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 1.75rem;
+        height: 1.75rem;
         font-size: var(--font-size-xs);
     }
 
@@ -167,7 +210,7 @@
         left: calc(100% + var(--space-1));
     }
 
-    /* Upload Area */
+    /* Enhanced Upload Area */
     .upload-area {
         padding: var(--space-6);
     }
@@ -182,16 +225,17 @@
         margin: var(--space-3) 0;
     }
 
-    /* Color Editor */
+    /* Enhanced Mobile Panels */
     .color-editor,
     .model-editor,
     .upload-preview {
         padding: var(--space-4);
+        border-radius: var(--radius-xl);
     }
 
     .color-controls {
         margin-bottom: var(--space-4);
-        padding-bottom: var(--space-4);
+        padding: var(--space-3);
     }
 
     .preview-panel,
@@ -199,63 +243,88 @@
     .viewport-panel,
     .layer-panel {
         padding: var(--space-3);
+        border-radius: var(--radius-lg);
+    }
+
+    /* Mobile-optimized sticky preview */
+    .preview-panel {
+        max-height: 200px;
+        top: var(--space-1);
     }
 
     #color-preview-canvas {
-        height: 200px;
+        height: 150px;
+        max-width: 250px;
     }
 
     .three-viewport {
         height: 250px;
     }
 
-    /* Color Items */
+    /* Enhanced Color Items for Mobile */
     .color-item {
-        padding: var(--space-2);
+        padding: var(--space-3);
         gap: var(--space-2);
+        min-height: 85px;
     }
 
     .color-swatch {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
     }
 
-    /* Layer Items */
+    .color-info {
+        gap: var(--space-1);
+    }
+
+    .color-percentage {
+        padding: var(--space-2);
+    }
+
+    /* Enhanced Layer Items */
     .layer-item {
         padding: var(--space-2);
         gap: var(--space-2);
     }
 
     .layer-color {
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
     }
 
-    /* Buttons */
+    /* Enhanced Buttons for Mobile */
     .btn {
         padding: var(--space-3) var(--space-4);
         font-size: var(--font-size-sm);
+        min-height: 44px; /* Accessibility touch target */
     }
 
     .btn-small {
         padding: var(--space-2) var(--space-3);
         font-size: var(--font-size-xs);
+        min-height: 36px;
     }
 
     .btn-export {
         padding: var(--space-3);
         font-size: var(--font-size-xs);
+        min-height: 50px;
     }
 
-    /* Export Section */
+    /* Enhanced Export Section */
     .export-section {
         padding: var(--space-4);
     }
+    
+    .export-options {
+        grid-template-columns: 1fr;
+    }
 
-    /* Loading and Error States */
+    /* Enhanced Loading and Error States */
     .loading-content {
         padding: var(--space-6);
         margin: var(--space-4);
+        border-radius: var(--radius-xl);
     }
 
     .error-toast {
@@ -263,46 +332,61 @@
         right: var(--space-4);
         left: var(--space-4);
         max-width: none;
+        border-radius: var(--radius-lg);
     }
 }
 
-/* Large Desktop Breakpoint */
+/* Large Desktop Breakpoint - Enhanced */
 @media (min-width: 1400px) {
     .container {
         max-width: 1400px;
     }
 
-    /* Larger editor layouts */
+    /* Enhanced larger editor layouts */
     .editor-layout {
-        grid-template-columns: 1fr 350px;
+        grid-template-columns: 380px 1fr;
+        gap: var(--space-8);
     }
 
     .model-layout {
-        grid-template-columns: 1fr 350px;
+        grid-template-columns: 1fr 380px;
+        gap: var(--space-8);
     }
 
     .three-viewport {
-        height: 500px;
+        height: 550px;
     }
 
     #color-preview-canvas {
-        height: 400px;
+        height: 450px;
+        max-width: 350px;
+    }
+
+    /* Enhanced color list for large screens */
+    .color-list {
+        max-height: 700px;
     }
 
     /* More export options per row */
     .export-options {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-6);
+    }
+    
+    /* Enhanced layer list for large screens */
+    .layer-list {
+        max-height: 500px;
     }
 }
 
-/* Landscape Mobile */
+/* Landscape Mobile - Enhanced */
 @media (max-width: 768px) and (orientation: landscape) {
     .three-viewport {
-        height: 250px;
+        height: 280px;
     }
 
     #color-preview-canvas {
-        height: 200px;
+        height: 220px;
     }
 
     .upload-area {
@@ -315,29 +399,52 @@
     }
 
     #preview-image {
-        max-width: 120px;
-        max-height: 120px;
+        max-width: 140px;
+        max-height: 140px;
+    }
+    
+    /* Landscape-specific sticky behavior */
+    .preview-panel {
+        max-height: 250px;
+    }
+    
+    .color-list {
+        max-height: 300px;
+    }
+    
+    .layer-list {
+        max-height: 250px;
     }
 }
 
-/* High DPI Displays */
+/* High DPI Displays - Enhanced */
 @media (-webkit-min-device-pixel-ratio: 2),
        (min-resolution: 192dpi),
        (min-resolution: 2dppx) {
-    .upload-icon {
+    .upload-icon,
+    .logo-icon {
         /* Sharper icons on retina displays */
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
 
-    .color-swatch {
+    .color-swatch,
+    .layer-color {
         /* Sharper color swatches */
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
     }
+    
+    /* Enhanced gradient rendering */
+    .btn-primary,
+    .btn-export,
+    .export-section::before {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+    }
 }
 
-/* Reduced Motion */
+/* Reduced Motion - Enhanced */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -348,59 +455,104 @@
         scroll-behavior: auto !important;
     }
 
-    .spinner {
-        animation: none;
+    .spinner,
+    .logo-icon,
+    .upload-icon,
+    .export-section::before {
+        animation: none !important;
     }
 
     .step-content {
-        animation: none;
+        animation: none !important;
+    }
+    
+    /* Remove all transform animations */
+    .btn:hover,
+    .color-swatch:hover,
+    .color-item:hover,
+    .layer-item:hover,
+    .three-viewport:hover,
+    #color-preview-canvas:hover {
+        transform: none !important;
     }
 }
 
-/* Touch Device Optimizations */
+/* Touch Device Optimizations - Enhanced */
 @media (hover: none) and (pointer: coarse) {
     /* Larger touch targets */
     .btn {
-        min-height: 44px;
+        min-height: 48px;
         padding: var(--space-3) var(--space-6);
     }
 
     .btn-small {
-        min-height: 36px;
+        min-height: 40px;
         padding: var(--space-2) var(--space-4);
     }
 
     .color-swatch {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         cursor: pointer;
+    }
+    
+    .layer-color {
+        width: 32px;
+        height: 32px;
     }
 
     .drag-handle {
-        font-size: var(--font-size-xl);
-        padding: var(--space-2);
+        font-size: var(--font-size-2xl);
+        padding: var(--space-3);
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .color-delete {
+        width: 40px;
+        height: 40px;
     }
 
     /* Remove hover effects on touch devices */
     .btn:hover,
     .color-swatch:hover,
-    .upload-area:hover {
-        transform: none;
+    .upload-area:hover,
+    .color-item:hover,
+    .layer-item:hover,
+    .three-viewport:hover,
+    #color-preview-canvas:hover {
+        transform: none !important;
         background: initial;
         border-color: initial;
+        box-shadow: initial;
     }
 
     /* Better touch feedback */
     .btn:active {
         transform: scale(0.98);
+        opacity: 0.8;
     }
 
     .color-swatch:active {
         transform: scale(0.95);
+        opacity: 0.9;
+    }
+    
+    .color-item:active,
+    .layer-item:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Enhanced scrolling for touch */
+    .color-list,
+    .layer-list {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
     }
 }
 
-/* Dark Mode Responsive Adjustments */
+/* Dark Mode Responsive Adjustments - Enhanced */
 @media (prefers-color-scheme: dark) {
     @media (max-width: 768px) {
         .three-viewport {
@@ -409,10 +561,19 @@
                         linear-gradient(45deg, transparent 75%, var(--color-gray-800) 75%),
                         linear-gradient(-45deg, transparent 75%, var(--color-gray-800) 75%);
         }
+        
+        /* Enhanced dark mode panels */
+        .preview-panel,
+        .color-panel,
+        .viewport-panel,
+        .layer-panel {
+            background-image: none;
+            background: var(--color-surface);
+        }
     }
 }
 
-/* Print Styles */
+/* Print Styles - Enhanced */
 @media print {
     .header,
     .progress-nav,
@@ -431,14 +592,72 @@
     .step-content {
         display: block !important;
         page-break-after: always;
+        background: white !important;
+        box-shadow: none !important;
     }
 
     .step-content:last-child {
         page-break-after: avoid;
     }
 
-    .three-viewport {
+    .three-viewport,
+    #color-preview-canvas {
         border: 1px solid var(--color-border);
-        background: var(--color-white);
+        background: var(--color-white) !important;
+        box-shadow: none !important;
+    }
+    
+    .color-item,
+    .layer-item {
+        background: white !important;
+        border: 1px solid var(--color-border) !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Ultra-wide Displays */
+@media (min-width: 1920px) {
+    .container {
+        max-width: 1600px;
+    }
+    
+    .editor-layout {
+        grid-template-columns: 420px 1fr;
+    }
+    
+    .model-layout {
+        grid-template-columns: 1fr 420px;
+    }
+    
+    .three-viewport {
+        height: 600px;
+    }
+    
+    #color-preview-canvas {
+        height: 500px;
+        max-width: 400px;
+    }
+}
+
+/* Compact Height Displays */
+@media (max-height: 700px) and (min-width: 769px) {
+    .color-list {
+        max-height: 300px;
+    }
+    
+    .layer-list {
+        max-height: 250px;
+    }
+    
+    .preview-panel {
+        max-height: 300px;
+    }
+    
+    #color-preview-canvas {
+        height: 200px;
+    }
+    
+    .three-viewport {
+        height: 300px;
     }
 } 
